@@ -1,0 +1,57 @@
+---
+title: "projekt"
+author: "Artur Kidaj"
+date: "2023-10-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(openxlsx)
+library(kableExtra)
+```
+
+```{r}
+data <- read.csv("udemy_courses.csv")
+
+data <- data[,-3]
+data <- data[,-1]
+```
+
+
+
+W naszym projekcie skupimy się na analizie bazy danych "Udemy courses".
+
+Oto pierwsze sześć wierszy z tabeli.
+```{r}
+head(data)
+```
+
+```{r}
+colnames(data)
+colnames(data) = c("Tytuł","Płatny","Cena","Subskrybenci","Recenzje","Wykłady","Poziom","Długość","Opublikowano","Temat")
+head(data)
+```
+
+
+Tytuł - Tytuł kursu 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
