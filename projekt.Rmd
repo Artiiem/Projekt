@@ -3,15 +3,19 @@ title: "projekt"
 author: "Artur Kidaj"
 date: "2023-10-12"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r echo=FALSE , warning=FALSE}
 library(openxlsx)
 library(kableExtra)
+library(knitr)
+library(gt)
 ```
 
 ```{r}
@@ -21,40 +25,58 @@ data <- data[,-3]
 data <- data[,-1]
 ```
 
-
-
 W naszym projekcie skupimy się na analizie bazy danych "Udemy courses".
 
-Oto pierwsze sześć wierszy z tabeli.
-```{r}
-head(data)
-```
+Oto pierwsze pięć wierszy z tabeli.
 
 ```{r}
-colnames(data)
 colnames(data) = c("Tytuł","Płatny","Cena","Subskrybenci","Recenzje","Wykłady","Poziom","Długość","Opublikowano","Temat")
-head(data)
+
+kable(head(data,5))
+
+gt(head(data,5))
 ```
 
+## Zmienne
 
-Tytuł - Tytuł kursu 
+-   Tytuł - Tytuł kursu.
 
-test
+-   Płatny - Informuje o tym, czy dany kurs jest płatny.
 
-asdasdasdasd
+-   Cena - Ukazuje cenę kursu wyrażoną w dolarach.
 
-klajhdkjasbkjasd
+    ```{r}
+    hist(data$Cena)
+    ```
 
+-   Subskrybenci - Ukazuje liczbę subskrybentów kursu.
 
-asdasdsa dasd asdasdsad asd
+-   Recenzje - Ukazuje liczbę recenzji kursu.
 
-cos rowadzam
+-   Wykłady - Ukazuje liczbę wykładów kursu.
 
+-   Poziom - Przedstawia poziom trudności kursu podzielną na cztery kategorie:
 
+    -   *Beginner Level* - poziom początkujący.
 
+    -   *Intermediate Level* - poziom średniozaawansowany.
 
+    -   *Expert Level* - poziom zaawansowany.
 
+    -   *All levels* - wszystkie poziomy.
 
+-   Długość - Ukazuje długość kursu wyrażoną w godzinach.
 
+-   Opublikowano - Przedstawia datę publikacji kursu o następującej strukturze:
 
+    *rok-miesiąc-dzień T - godzina:minuta:sekunda Z*
 
+-   Temat - Przedstawia temat kursu wyrażonego w czterech różnych kategoriach:
+
+    -   *Business Finance* - finanse? finanse przedsiębiorstw?
+
+    -   *Graphic Design* -projekt graficzny.
+
+    -   *Musical Instruments* - muzyczne instrumenty.
+
+    -   *Web Development* - tworzenie/rozwój stron internetowych.
