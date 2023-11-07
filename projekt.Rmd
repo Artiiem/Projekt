@@ -16,7 +16,11 @@ library(openxlsx)
 library(kableExtra)
 library(knitr)
 library(gt)
+library(tidyverse)
+
 ```
+
+## Wczytanie danych
 
 ```{r}
 data <- read.csv("udemy_courses.csv")
@@ -30,10 +34,6 @@ W naszym projekcie skupimy się na analizie bazy danych "Udemy courses".
 Oto pierwsze pięć wierszy z tabeli.
 
 ```{r}
-colnames(data) = c("Tytuł","Płatny","Cena","Subskrybenci","Recenzje","Wykłady","Poziom","Długość","Opublikowano","Temat")
-
-kable(head(data,5))
-
 gt(head(data,5))
 ```
 
@@ -44,10 +44,6 @@ gt(head(data,5))
 -   Płatny - Informuje o tym, czy dany kurs jest płatny.
 
 -   Cena - Ukazuje cenę kursu wyrażoną w dolarach.
-
-    ```{r}
-    hist(data$Cena)
-    ```
 
 -   Subskrybenci - Ukazuje liczbę subskrybentów kursu.
 
@@ -80,3 +76,50 @@ gt(head(data,5))
     -   *Musical Instruments* - muzyczne instrumenty.
 
     -   *Web Development* - tworzenie/rozwój stron internetowych.
+    
+## Czyszczenie i przygotowanie danych
+
+```{r}
+data_clean <- data %>%
+  filter(!is.na(price)) %>%
+  mutate(price = as.numeric(price))
+```
+
+## Analiza eksploracyjna
+
+Podstawowe statystyki
+```{r}
+summary(data)
+```
+## Wizualizacja danych
+
+ Wizualizacja rozkładu ceny kursów  
+```{r}
+ggplot(data, aes(x = price)) + 
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  theme_minimal() +
+  labs(title = "Rozkład ceny kursów", x = "Cena", y = "Liczba kursów")
+```
+
+```{r}
+data %>%
+  group_by(subject) %>%
+  summarise(count = n()) %>%
+  ggplot(aes(x = reorder(subject, -count), y = count, fill = subject)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Liczba kursów w każdej kategorii", x = "Kategoria", y = "Liczba kursów") +
+  coord_flip()
+
+```
+
+## Modelowanie danych
+
+Jakiś model
+
+```{r}
+model <- lm(price ~ num_subscribers, data = data_clean)
+summary(model)
+```
+
+## Wnioski
