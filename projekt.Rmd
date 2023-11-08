@@ -78,12 +78,26 @@ gt(head(data,5))
     -   *Web Development* - tworzenie/rozwój stron internetowych.
     
 ## Czyszczenie i przygotowanie danych
+Czyszczenie danych
 
 ```{r}
 data_clean <- data %>%
   filter(!is.na(price)) %>%
   mutate(price = as.numeric(price))
 ```
+Sprawdzenie czy nie ma powtarzających się rekordów
+
+```{r}
+powtarzajace = data[duplicated(data),]
+liczba = nrow(powtarzajace)
+liczba
+```
+W pliku znalazło się 6 takich samych rekordów, więc je teraz usunę
+
+```{r}
+data_cleaned <- data %>% distinct()
+```
+
 
 ## Analiza eksploracyjna
 
@@ -91,6 +105,23 @@ Podstawowe statystyki
 ```{r}
 summary(data)
 ```
+Na podstawie podanych statystyk, możemy wywnioskować kilka rzeczy o kursach zawartych w zbiorze danych:
+
+Różnorodność cen: Kursy na Udemy mają szeroki zakres cen, od darmowych (0 USD) do 200 USD. Średnia cena wynosi 66.05 USD, co wskazuje, że chociaż są kursy droższe, wiele z nich ma umiarkowaną cenę.
+
+Popularność kursów: Liczba subskrybentów kursów jest bardzo zróżnicowana, z minimum 0 (co może oznaczać nowe kursy lub takie, które nie zyskały jeszcze popularności) do maksymalnej liczby subskrybentów wynoszącej 268,923. Mediana liczby subskrybentów wynosi 911,5, co oznacza, że połowa kursów ma mniej niż 912 subskrybentów, a połowa więcej. Średnia liczba subskrybentów jest znacznie wyższa (3197,2), co jest pociągnięte w górę przez kursy o wyjątkowo wysokiej liczbie subskrybentów.
+
+Aktywność recenzentów: Liczba recenzji również się waha, z minimum 0 do maksimum 27,445. Średnia liczba recenzji wynosi 156,3, co wskazuje, że kursy są oceniane przez uczniów, ale istnieje znacząca różnica między najbardziej a najmniej ocenianymi kursami.
+
+Zawartość kursu: Liczba wykładów waha się od 0 do 779, z medianą 25 i średnią 40,11. To sugeruje, że większość kursów ma dość ograniczoną liczbę wykładów, ale niektóre kursy oferują znacznie więcej materiału.
+
+Poziom trudności: Poziom trudności kursów jest reprezentowany jako zmienna kategorialna, ale nie mamy tutaj danych dotyczących rozkładu tych kategorii.
+
+Czas trwania treści: Czas trwania treści kursów ma szeroki zakres od 0 do 78,5 godzin, z medianą wynoszącą 2 godziny i średnią 4,095 godziny. To wskazuje, że większość kursów ma krótkie treści, ale są kursy, które są znacznie dłuższe.
+
+Ogólnie, te statystyki wskazują na dużą różnorodność kursów dostępnych na Udemy, zarówno pod względem ceny, zawartości, jak i popularności. Możemy również wywnioskować, że kursy są w różnych przedziałach cenowych, co czyni je dostępnymi dla różnych grup demograficznych, a także pokazuje, że niektóre kursy są wyjątkowo popularne, co może wskazywać na wysoką jakość lub skuteczne marketingowe wsparcie.
+
+
 ## Wizualizacja danych
 
  Wizualizacja rozkładu ceny kursów  
@@ -112,6 +143,40 @@ data %>%
   coord_flip()
 
 ```
+Na podstawie tego wykresu można zaobserwować, że najwięcej kursów jest na temat biznesowy i informatyczny, prawdopodobnie dlatego, że według ludzi to właśnie w tych kierunkach trzeba się rozwijać aby dużo zarabiać, mniej jest kursów muzycznych, bo się mniej tam zarabia
+
+```{r}
+ggplot(data %>% filter(num_subscribers < 10000), aes(x = num_subscribers)) +
+  geom_histogram(bins = 20, fill = "green", color = "black") +
+  labs(title = "Histogram liczby subskrybentów (do 10000)", x = "Liczba subskrybentów", y = "Liczba kursów") +
+  theme_minimal()
+```
+```{r}
+ggplot(data %>% filter(num_reviews < 1000), aes(x = num_reviews)) +
+  geom_histogram(bins = 20, fill = "orange", color = "black") +
+  labs(title = "Histogram liczby recenzji (do 1000)", x = "Liczba recenzji", y = "Liczba kursów") +
+  theme_minimal()
+```
+Na podstawie tych wykresów można stwierdzić, że zdecydowana większość kursów jest nie popularna, ponieważ ma liczbę recenzji oraz subskrybentów bliską zera
+
+```{r}
+ggplot(data, aes(x = level)) +
+  geom_bar(fill = "purple") +
+  labs(title = "Rozkład poziomu kursów", x = "Poziom", y = "Liczba kursów") +
+  theme_minimal()
+```
+Najwięcej jest kursów dla wszystkich poziomów, następnie dla początkujących, wskazuje to, że większość osób porzuca naukę po początku nauki, albo że udemy jest stroną dla osób początkujących, a żeby czegoś więcej się nauczyć trzeba płacić więcej na innych stronach
+
+Macierz korelacji
+```{r}
+library(corrplot)
+correlation_matrix <- cor(data_cleaned[, c('price', 'num_subscribers', 'num_reviews', 'num_lectures', 'content_duration')])
+
+corrplot(correlation_matrix)
+```
+
+
+
 
 ## Modelowanie danych
 
