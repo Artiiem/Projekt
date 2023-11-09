@@ -169,12 +169,15 @@ Najwięcej jest kursów dla wszystkich poziomów, następnie dla początkującyc
 
 Macierz korelacji
 ```{r}
-library(corrplot)
-correlation_matrix <- cor(data_cleaned[, c('price', 'num_subscribers', 'num_reviews', 'num_lectures', 'content_duration')])
-
-corrplot(correlation_matrix)
+library(PerformanceAnalytics)
+Cor_mat = data[, c(3,4,5,6,8)]
+chart.Correlation(Cor_mat, histogram = TRUE, pch = 19)
 ```
+## Kilka obserwacji z danej macierzy korelacji
 
+* liczba lekcji jest silnie pozytywnie skorelowana z długością kursu, co oznacza, że im więcej dany kurs ma zawartości tym jest dłuższy
+
+Możemy także zaobserwować praktyczne zerową korelację liczby subskrybentów oraz ceną kursu, co jest zaskakujące, ponieważ zazwyczaj im coś jest tańsze tym ma więcej chętnych, jednak odnosząc się do kursów nie koniecznie jest to prawdziwe
 
 
 
