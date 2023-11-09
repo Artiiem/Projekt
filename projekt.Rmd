@@ -168,18 +168,42 @@ ggplot(data, aes(x = level)) +
 Najwięcej jest kursów dla wszystkich poziomów, następnie dla początkujących, wskazuje to, że większość osób porzuca naukę po początku nauki, albo że udemy jest stroną dla osób początkujących, a żeby czegoś więcej się nauczyć trzeba płacić więcej na innych stronach
 
 Macierz korelacji
+
+Zamiana danych jakościowych na ilościowe, aby móc je później przeanalizować
+Level zmieniam na 
+0 - All Levels
+1 - Beginner Level
+2 - Expert Level
+3 - Intermediate Level
+
+Subject zmieniam na
+0 - Business Finance
+1 - Graphic Design
+2 - Musical Instruments
+3 - Web Development
+```{r}
+data$is_paid <- ifelse(data$is_paid == "True", 1, 0)
+data$level = as.integer(factor(data$level)) - 1
+data$subject = as.integer(factor(data$subject)) - 1
+```
+
+
+
+
 ```{r}
 library(PerformanceAnalytics)
-Cor_mat = data[, c(3,4,5,6,8)]
-chart.Correlation(Cor_mat, histogram = TRUE, pch = 19)
+Cor_mat = data[, c(2:8, 10)]
+chart.Correlation(Cor_mat, histogram = TRUE)
 ```
 ## Kilka obserwacji z danej macierzy korelacji
 
-* liczba lekcji jest silnie pozytywnie skorelowana z długością kursu, co oznacza, że im więcej dany kurs ma zawartości tym jest dłuższy
+Istnieje silna dodatnia korelacja między liczbą lekcji a całkowitym czasem trwania kursu. To wskazuje, że zwiększona liczba lekcji jest zazwyczaj skorelowana z dłuższym czasem dostępu do treści kursu, co jest zgodne z oczekiwaniami, że bogatsza w treści oferta edukacyjna wymaga więcej czasu na jej przyswojenie.
 
-Możemy także zaobserwować praktyczne zerową korelację liczby subskrybentów oraz ceną kursu, co jest zaskakujące, ponieważ zazwyczaj im coś jest tańsze tym ma więcej chętnych, jednak odnosząc się do kursów nie koniecznie jest to prawdziwe
+Analiza wykazała również istotną dodatnią korelację między liczbą recenzji a liczbą subskrybentów. Jest to wskaźnik, że kursy o większej liczbie zapisanych uczestników generują proporcjonalnie większą liczbę recenzji. To zjawisko może świadczyć o większym zaangażowaniu użytkowników w kursy, które cieszą się większą popularnością.
 
+Z analizy wynika, że poziom trudności kursu, określony przez autora, nie wykazuje korelacji z żadną inną mierzoną zmienną w zestawie danych. Może to sugerować, że stopień trudności kursu jest determinowany niezależnie od innych czynników, takich jak czas trwania kursu, liczba lekcji, czy popularność kursu wśród subskrybentów.
 
+Ponadto, obserwacja negatywnej korelacji między statusem płatności kursu a liczbą subskrybentów może wskazywać na tendencję, że kursy oferowane bezpłatnie przyciągają większą liczbę uczestników. To zjawisko może podkreślać wpływ dostępności cenowej na decyzje o zapisaniu się na kurs przez potencjalnych uczestników.
 
 ## Modelowanie danych
 
