@@ -1,6 +1,6 @@
 ---
 title: "projekt"
-author: "Artur Kidaj"
+author: "Artur Kidaj, Kamil Kopiński"
 date: "2023-10-12"
 output: html_document
 editor_options: 
@@ -11,13 +11,17 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r echo=FALSE , warning=FALSE}
+```{r echo=FALSE , warning=FALSE, include=FALSE}
 library(openxlsx)
 library(kableExtra)
 library(knitr)
 library(gt)
 library(tidyverse)
-
+library(PerformanceAnalytics)
+library(gtsummary)
+library(lmtest)
+library(nortest)
+library(ivreg)
 ```
 
 ## Wczytanie danych
@@ -39,19 +43,19 @@ gt(head(data,5))
 
 ## Zmienne
 
--   Tytuł - Tytuł kursu.
+-   course_title - Tytuł kursu.
 
--   Płatny - Informuje o tym, czy dany kurs jest płatny.
+-   is_paid - Informuje o tym, czy dany kurs jest płatny.
 
--   Cena - Ukazuje cenę kursu wyrażoną w dolarach.
+-   price - Ukazuje cenę kursu wyrażoną w dolarach.
 
--   Subskrybenci - Ukazuje liczbę subskrybentów kursu.
+-   num_subscribers - Ukazuje liczbę subskrybentów kursu.
 
--   Recenzje - Ukazuje liczbę recenzji kursu.
+-   num_reviews - Ukazuje liczbę recenzji kursu.
 
--   Wykłady - Ukazuje liczbę wykładów kursu.
+-   num_lectures - Ukazuje liczbę wykładów kursu.
 
--   Poziom - Przedstawia poziom trudności kursu podzielną na cztery kategorie:
+-   level - Przedstawia poziom trudności kursu podzielną na cztery kategorie:
 
     -   *Beginner Level* - poziom początkujący.
 
@@ -61,13 +65,13 @@ gt(head(data,5))
 
     -   *All levels* - wszystkie poziomy.
 
--   Długość - Ukazuje długość kursu wyrażoną w godzinach.
+-   content_duration - Ukazuje długość kursu wyrażoną w godzinach.
 
--   Opublikowano - Przedstawia datę publikacji kursu o następującej strukturze:
+-   published_timestamp - Przedstawia datę publikacji kursu o następującej strukturze:
 
     *rok-miesiąc-dzień T - godzina:minuta:sekunda Z*
 
--   Temat - Przedstawia temat kursu wyrażonego w czterech różnych kategoriach:
+-   subject - Przedstawia temat kursu wyrażonego w czterech różnych kategoriach:
 
     -   *Business Finance* - finanse? finanse przedsiębiorstw?
 
@@ -76,8 +80,9 @@ gt(head(data,5))
     -   *Musical Instruments* - muzyczne instrumenty.
 
     -   *Web Development* - tworzenie/rozwój stron internetowych.
-    
+
 ## Czyszczenie i przygotowanie danych
+
 Czyszczenie danych
 
 ```{r}
@@ -85,6 +90,7 @@ data_clean <- data %>%
   filter(!is.na(price)) %>%
   mutate(price = as.numeric(price))
 ```
+
 Sprawdzenie czy nie ma powtarzających się rekordów
 
 ```{r}
@@ -92,19 +98,29 @@ powtarzajace = data[duplicated(data),]
 liczba = nrow(powtarzajace)
 liczba
 ```
+
 W pliku znalazło się 6 takich samych rekordów, więc je teraz usunę
 
 ```{r}
 data_cleaned <- data %>% distinct()
 ```
 
-
 ## Analiza eksploracyjna
 
 Podstawowe statystyki
+
 ```{r}
-summary(data)
+data %>% 
+  select(-course_title,-published_timestamp) %>% 
+  tbl_summary(
+    type = all_continuous() ~ "continuous2",
+    statistic = all_continuous() ~ c("{median} ({p25}, {p75})","{mean} {sd}", "{min}, {max}"))
 ```
+
+```{r}
+#summary(data)
+```
+
 Na podstawie podanych statystyk, możemy wywnioskować kilka rzeczy o kursach zawartych w zbiorze danych:
 
 Różnorodność cen: Kursy na Udemy mają szeroki zakres cen, od darmowych (0 USD) do 200 USD. Średnia cena wynosi 66.05 USD, co wskazuje, że chociaż są kursy droższe, wiele z nich ma umiarkowaną cenę.
@@ -121,10 +137,10 @@ Czas trwania treści: Czas trwania treści kursów ma szeroki zakres od 0 do 78,
 
 Ogólnie, te statystyki wskazują na dużą różnorodność kursów dostępnych na Udemy, zarówno pod względem ceny, zawartości, jak i popularności. Możemy również wywnioskować, że kursy są w różnych przedziałach cenowych, co czyni je dostępnymi dla różnych grup demograficznych, a także pokazuje, że niektóre kursy są wyjątkowo popularne, co może wskazywać na wysoką jakość lub skuteczne marketingowe wsparcie.
 
-
 ## Wizualizacja danych
 
- Wizualizacja rozkładu ceny kursów  
+Wizualizacja rozkładu ceny kursów
+
 ```{r}
 ggplot(data, aes(x = price)) + 
   geom_histogram(bins = 30, fill = "blue", color = "black") +
@@ -143,6 +159,7 @@ data %>%
   coord_flip()
 
 ```
+
 Na podstawie tego wykresu można zaobserwować, że najwięcej kursów jest na temat biznesowy i informatyczny, prawdopodobnie dlatego, że według ludzi to właśnie w tych kierunkach trzeba się rozwijać aby dużo zarabiać, mniej jest kursów muzycznych, bo się mniej tam zarabia
 
 ```{r}
@@ -151,12 +168,14 @@ ggplot(data %>% filter(num_subscribers < 10000), aes(x = num_subscribers)) +
   labs(title = "Histogram liczby subskrybentów (do 10000)", x = "Liczba subskrybentów", y = "Liczba kursów") +
   theme_minimal()
 ```
+
 ```{r}
 ggplot(data %>% filter(num_reviews < 1000), aes(x = num_reviews)) +
   geom_histogram(bins = 20, fill = "orange", color = "black") +
   labs(title = "Histogram liczby recenzji (do 1000)", x = "Liczba recenzji", y = "Liczba kursów") +
   theme_minimal()
 ```
+
 Na podstawie tych wykresów można stwierdzić, że zdecydowana większość kursów jest nie popularna, ponieważ ma liczbę recenzji oraz subskrybentów bliską zera
 
 ```{r}
@@ -165,6 +184,7 @@ ggplot(data, aes(x = level)) +
   labs(title = "Rozkład poziomu kursów", x = "Poziom", y = "Liczba kursów") +
   theme_minimal()
 ```
+
 Najwięcej jest kursów dla wszystkich poziomów, następnie dla początkujących, wskazuje to, że większość osób porzuca naukę po początku nauki, albo że udemy jest stroną dla osób początkujących, a żeby czegoś więcej się nauczyć trzeba płacić więcej na innych stronach
 
 Macierz korelacji
@@ -204,14 +224,87 @@ Analiza wykazała również istotną dodatnią korelację między liczbą recenz
 Z analizy wynika, że poziom trudności kursu, określony przez autora, nie wykazuje korelacji z żadną inną mierzoną zmienną w zestawie danych. Może to sugerować, że stopień trudności kursu jest determinowany niezależnie od innych czynników, takich jak czas trwania kursu, liczba lekcji, czy popularność kursu wśród subskrybentów.
 
 Ponadto, obserwacja negatywnej korelacji między statusem płatności kursu a liczbą subskrybentów może wskazywać na tendencję, że kursy oferowane bezpłatnie przyciągają większą liczbę uczestników. To zjawisko może podkreślać wpływ dostępności cenowej na decyzje o zapisaniu się na kurs przez potencjalnych uczestników.
-
 ## Modelowanie danych
 
-Jakiś model
+```{r}
+model_pusty <- lm(price~-1,data = data_cleaned)
+model_pelny <- lm(price~num_subscribers+num_reviews+num_lectures+content_duration, data=data_cleaned)
+```
+
+Selekcja w przód
 
 ```{r}
-model <- lm(price ~ num_subscribers, data = data_clean)
-summary(model)
+model1 <- step(model_pusty,scope = c(model_pusty,model_pelny),direction = 'forward')
+
 ```
+
+Eliminacja wsteczna
+
+```{r}
+model2 <- step(model_pelny,scope = c(model_pusty,model_pelny),direction = 'backward')
+```
+
+Eliminacja dwukierunkowa - od pustego do pełnego
+
+```{r}
+model3 <- step(model_pusty,scope = c(model_pusty,model_pelny),direction = 'both')
+```
+
+Eliminacja dwukierunkowa - od pełnego do pustego
+
+```{r}
+model4 <- step(model_pelny,scope = c(model_pusty,model_pelny),direction = 'both')
+```
+
+model1 oraz model3 to ten sam model.
+Podobnie model2 i model4.
+
+```{r}
+anova(model1,model2)
+```
+
+Na podstawie częściowego testu F dochodzimy do wniosku, że bardziej złożony model jest lepszy od prostszego modelu. Zatem dalszej analizie podamy model2.
+
+## Obserwacje nietypowe
+
+```{r}
+plot(model2,which = 4:5)
+```
+
+Na podstawie wyżej ukazanych wykresów możemy przypuszczać, że w modelu nie znalazły się żadne obserwacje nietypowe.
+
+## Podstawowe założenia
+
+Liniowość
+```{r}
+resettest(model2)
+raintest(model2)
+```
+
+Homoskedastyczność
+```{r}
+bptest(model2)
+```
+
+Autokorelacja
+```{r}
+dwtest(model2)
+```
+
+Egzogeniczność
+```{r}
+```
+
+Normalność reszt
+```{r warning=FALSE}
+lillie.test(model2$residuals)
+shapiro.test(model2$residuals)
+cvm.test(model2$residuals)
+ad.test(model2$residuals)
+```
+
+
+Wszędzie wszystko odrzucamy.
+
 
 ## Wnioski
