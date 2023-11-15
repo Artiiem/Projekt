@@ -210,11 +210,11 @@ data$subject = as.integer(factor(data$subject)) - 1
 
 
 
-```{r}
-library(PerformanceAnalytics)
+```{r warning=FALSE}
 Cor_mat = data[, c(2:8, 10)]
 chart.Correlation(Cor_mat, histogram = TRUE)
 ```
+
 ## Kilka obserwacji z danej macierzy korelacji
 
 Istnieje silna dodatnia korelacja między liczbą lekcji a całkowitym czasem trwania kursu. To wskazuje, że zwiększona liczba lekcji jest zazwyczaj skorelowana z dłuższym czasem dostępu do treści kursu, co jest zgodne z oczekiwaniami, że bogatsza w treści oferta edukacyjna wymaga więcej czasu na jej przyswojenie.
@@ -224,11 +224,31 @@ Analiza wykazała również istotną dodatnią korelację między liczbą recenz
 Z analizy wynika, że poziom trudności kursu, określony przez autora, nie wykazuje korelacji z żadną inną mierzoną zmienną w zestawie danych. Może to sugerować, że stopień trudności kursu jest determinowany niezależnie od innych czynników, takich jak czas trwania kursu, liczba lekcji, czy popularność kursu wśród subskrybentów.
 
 Ponadto, obserwacja negatywnej korelacji między statusem płatności kursu a liczbą subskrybentów może wskazywać na tendencję, że kursy oferowane bezpłatnie przyciągają większą liczbę uczestników. To zjawisko może podkreślać wpływ dostępności cenowej na decyzje o zapisaniu się na kurs przez potencjalnych uczestników.
+
+
+### Miary asymetrii i koncentracji
+
+```{r}
+base::sapply(list(price=data$price,num_subscribers=data$num_subscribers,
+                  num_reviews=data$num_reviews,num_lectures=data$num_lectures,
+                  content_duration=data$content_duration),
+             simplify = TRUE,
+             FUN =  function(x){
+             c(skewness = skewness(x),
+               kurtosis = kurtosis(x,method = 'moment'))}
+) %>% 
+  as.data.frame() %>% 
+  gt(rownames_to_stub = TRUE)
+```
+
+
+
+
 ## Modelowanie danych
 
 ```{r}
-model_pusty <- lm(price~-1,data = data_cleaned)
-model_pelny <- lm(price~num_subscribers+num_reviews+num_lectures+content_duration, data=data_cleaned)
+model_pusty <- lm(num_subscribers~-1,data = data_cleaned)
+model_pelny <- lm(num_subscribers~price+num_reviews+num_lectures+content_duration, data=data_cleaned)
 ```
 
 Selekcja w przód
@@ -265,13 +285,29 @@ anova(model1,model2)
 
 Na podstawie częściowego testu F dochodzimy do wniosku, że bardziej złożony model jest lepszy od prostszego modelu. Zatem dalszej analizie podamy model2.
 
+
+
 ## Obserwacje nietypowe
 
 ```{r}
 plot(model2,which = 4:5)
 ```
 
-Na podstawie wyżej ukazanych wykresów możemy przypuszczać, że w modelu nie znalazły się żadne obserwacje nietypowe.
+Na podstawie wyżej ukazanych wykresów możemy stwierdzić, że w modelu znajdują się obserwacje nietypowe. Są to obserwacje numer 3199,3225 oraz 2822
+
+
+```{r}
+data_new <- data_cleaned[-3225,][-3199,][-2882,]
+```
+
+```{r}
+model2 <- lm(num_subscribers~price+num_reviews+content_duration, data=data_new)
+```
+
+```{r}
+summary(model2)
+```
+
 
 ## Podstawowe założenia
 
