@@ -205,10 +205,8 @@ data$level = as.integer(factor(data$level)) - 1
 data$subject = as.integer(factor(data$subject)) - 1
 ```
 
-
-
-
-```{r warning=FALSE}
+```{r warning = false}
+library(PerformanceAnalytics)
 Cor_mat = data[, c(2:8, 10)]
 chart.Correlation(Cor_mat, histogram = TRUE)
 ```
