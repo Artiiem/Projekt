@@ -2,8 +2,10 @@
 title: "projekt"
 author: "Artur Kidaj, Kamil Kopiński"
 date: "2023-10-12"
-output: html_document
-editor_options: 
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
   chunk_output_type: inline
 ---
 
@@ -115,10 +117,6 @@ data %>%
   tbl_summary(
     type = all_continuous() ~ "continuous2",
     statistic = all_continuous() ~ c("{median} ({p25}, {p75})","{mean} {sd}", "{min}, {max}"))
-```
-
-```{r}
-#summary(data)
 ```
 
 Na podstawie podanych statystyk, możemy wywnioskować kilka rzeczy o kursach zawartych w zbiorze danych:
@@ -244,6 +242,7 @@ base::sapply(list(price=data$price,num_subscribers=data$num_subscribers,
 
 
 
+
 ## Modelowanie danych
 
 ```{r}
@@ -254,38 +253,21 @@ model_pelny <- lm(num_subscribers~price+num_reviews+num_lectures+content_duratio
 Selekcja w przód
 
 ```{r}
-model1 <- step(model_pusty,scope = c(model_pusty,model_pelny),direction = 'forward')
-
+model1 <- step(model_pusty,scope = formula(model_pelny),direction = 'forward')
 ```
 
 Eliminacja wsteczna
 
 ```{r}
-model2 <- step(model_pelny,scope = c(model_pusty,model_pelny),direction = 'backward')
+model2 <- step(model_pelny,scope = formula(model_pelny),direction = 'backward')
 ```
 
-Eliminacja dwukierunkowa - od pustego do pełnego
-
-```{r}
-model3 <- step(model_pusty,scope = c(model_pusty,model_pelny),direction = 'both')
-```
-
-Eliminacja dwukierunkowa - od pełnego do pustego
-
-```{r}
-model4 <- step(model_pelny,scope = c(model_pusty,model_pelny),direction = 'both')
-```
-
-model1 oraz model3 to ten sam model.
-Podobnie model2 i model4.
 
 ```{r}
 anova(model1,model2)
 ```
 
 Na podstawie częściowego testu F dochodzimy do wniosku, że bardziej złożony model jest lepszy od prostszego modelu. Zatem dalszej analizie podamy model2.
-
-
 
 ## Obserwacje nietypowe
 
@@ -341,6 +323,14 @@ ad.test(model2$residuals)
 
 
 Wszędzie wszystko odrzucamy.
+
+
+```{r}
+nowa_wart <- data.frame(price=min(data$price),num_reviews=min(data$num_reviews),content_duration=min(data$content_duration)) 
+pred <- predict(model2,newdata=nowa_wart,interval='predict')
+pred
+```
+
 
 
 ## Wnioski
