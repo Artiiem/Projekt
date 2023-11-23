@@ -40,7 +40,49 @@ W naszym projekcie skupimy się na analizie bazy danych "Udemy courses".
 Oto pierwsze pięć wierszy z tabeli.
 
 ```{r}
-gt(head(data,5))
+colnames(data)
+```
+
+
+```{r}
+gt(head(data,5)) %>% 
+    cols_width(course_title ~ px(190),
+               num_subscribers ~ px(180),
+               num_reviews ~ px(150),
+               num_lectures ~ px(150),
+               level ~ px(100),
+               content_duration ~ px(200),
+               published_timestamp ~px(200),
+               subject ~ px(150),
+               everything() ~ px(70),
+               ) %>% 
+  tab_style(
+    style = cell_text(
+      weight = 'bold',
+      transform = 'uppercase'
+    ),
+    locations = cells_column_labels()
+  ) %>% 
+  tab_style(
+    style = cell_text(
+      weight = 'bold',
+      style = 'italic'
+    ),
+    locations = cells_body(columns = course_title)
+  ) %>% 
+  tab_style(
+    style = cell_text(
+      style = 'italic'
+    ),
+    locations = cells_body(columns = c(is_paid,level,subject))
+  ) %>% 
+  tab_style(
+    style=cell_borders(sides = "r", color = "gray50", weight = px(2)),
+    locations = list(
+      cells_body(columns = course_title),
+      cells_column_labels(columns = course_title)
+      )
+  )
 ```
 
 ## Zmienne
@@ -205,8 +247,7 @@ data$level = as.integer(factor(data$level)) - 1
 data$subject = as.integer(factor(data$subject)) - 1
 ```
 
-```{r warning = false}
-library(PerformanceAnalytics)
+```{r}
 Cor_mat = data[, c(2:8, 10)]
 chart.Correlation(Cor_mat, histogram = TRUE)
 ```
@@ -230,15 +271,12 @@ base::sapply(list(price=data$price,num_subscribers=data$num_subscribers,
                   content_duration=data$content_duration),
              simplify = TRUE,
              FUN =  function(x){
-             c(skewness = skewness(x),
-               kurtosis = kurtosis(x,method = 'moment'))}
+             c(skewness = round(skewness(x),3),
+               kurtosis = round(kurtosis(x,method = 'moment'),3))}
 ) %>% 
   as.data.frame() %>% 
   gt(rownames_to_stub = TRUE)
 ```
-
-
-
 
 
 ## Modelowanie danych
