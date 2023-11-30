@@ -24,6 +24,8 @@ library(gtsummary)
 library(lmtest)
 library(nortest)
 library(ivreg)
+
+library(rstatix)
 ```
 
 ## Wczytanie danych
@@ -155,11 +157,65 @@ Podstawowe statystyki
 
 ```{r}
 data %>% 
-  select(-course_title,-published_timestamp) %>% 
-  tbl_summary(
-    type = all_continuous() ~ "continuous2",
-    statistic = all_continuous() ~ c("{median} ({p25}, {p75})","{mean} {sd}", "{min}, {max}"))
+  select(where(is.numeric)) %>% 
+  get_summary_stats(show=c('min','q1','median','mean','q3','max')) %>% 
+  select(-n) %>% 
+  gt() %>% 
+  tab_style(
+    style = cell_text(
+      weight = 'bold',
+      transform = 'uppercase'
+    ),
+    locations = cells_column_labels()
+  ) %>% 
+  tab_style(
+    style = cell_text(
+      weight = 'bold',
+      style = 'italic'
+    ),
+    locations = cells_body(columns = variable)
+  ) %>% 
+  tab_style(
+    style=cell_borders(sides = "r", color = "gray50", weight = px(2)),
+    locations = list(
+      cells_body(columns = variable),
+      cells_column_labels(columns = variable)
+      )) %>% 
+  tab_style(
+    style = cell_fill(color = "#00ffff",alpha=0.7),
+    locations = cells_body(columns= max)
+    ) %>% 
+  tab_style(
+    style = cell_fill(color = "#00ffff",alpha=0.65),
+    locations = cells_body(columns= q3)
+    ) %>%
+    tab_style(
+    style = cell_fill(color = "#00ffff",alpha=0.6),
+    locations = cells_body(columns= mean)
+    ) %>%
+    tab_style(
+    style = cell_fill(color = "#00ffff",alpha=0.55),
+    locations = cells_body(columns= median)
+    ) %>%
+    tab_style(
+    style = cell_fill(color = "#00ffff",alpha=0.5),
+    locations = cells_body(columns= q1)
+    ) %>%
+    tab_style(
+    style = cell_fill(color = "#00ffff",alpha=0.45),
+    locations = cells_body(columns= min)
+    ) %>% 
+    tab_style(
+    style = list(
+      cell_fill(color = "black",alpha=0.9),
+      cell_text(color = 'white')
+    ),
+    locations = list(cells_body(columns= variable),cells_column_labels())
+    )
+
+
 ```
+
 
 Na podstawie podanych statystyk, możemy wywnioskować kilka rzeczy o kursach zawartych w zbiorze danych:
 
@@ -225,6 +281,7 @@ ggplot(data, aes(x = level)) +
   theme_minimal()
 ```
 
+
 Najwięcej jest kursów dla wszystkich poziomów, następnie dla początkujących, wskazuje to, że większość osób porzuca naukę po początku nauki, albo że udemy jest stroną dla osób początkujących, a żeby czegoś więcej się nauczyć trzeba płacić więcej na innych stronach
 
 Macierz korelacji
@@ -275,7 +332,29 @@ base::sapply(list(price=data$price,num_subscribers=data$num_subscribers,
                kurtosis = round(kurtosis(x,method = 'moment'),3))}
 ) %>% 
   as.data.frame() %>% 
-  gt(rownames_to_stub = TRUE)
+  gt(rownames_to_stub = TRUE) %>% 
+    tab_style(
+    style=list(cell_borders(sides = c("r"), color = "gray50", weight = px(2))),
+    locations=cells_stubhead()
+    ) %>% 
+  tab_options(
+    column_labels.border.top.style = 'hidden'
+  ) %>% 
+  tab_style(
+    style = cell_text(
+      weight = 'bold',
+      transform = 'uppercase'
+    ),
+    locations = cells_column_labels()
+  ) %>% 
+  tab_style(
+    style = cell_text(
+      weight = 'bold',
+      style = 'italic'
+    ),
+    locations = cells_stub()
+  )
+
 ```
 
 
