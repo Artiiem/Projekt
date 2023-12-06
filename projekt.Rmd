@@ -13,6 +13,19 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Do zrobienia w projekcie:
+- Lepsza wizualizacja i jej opis
+- ładna wizualizacja naszych wyników, np wyniki testów w ładnej tabeli
+- Ładny opis wyników także
+
+- Przenieść na Quarto, bo ładniej wygląda
+
+- Może zrobić korelacje zmiennych jakościowych np. test chi^2 i inne
+
+
+- praca nad modelem
+- zrobić więcej modeli
+
 ```{r echo=FALSE , warning=FALSE, include=FALSE}
 library(openxlsx)
 library(knitr)
