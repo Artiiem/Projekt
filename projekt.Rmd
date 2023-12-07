@@ -26,6 +26,14 @@ Do zrobienia w projekcie:
 - praca nad modelem
 - zrobić więcej modeli
 
+- stworzyć jednorodny styl tabeli (rozkład,styl tekstu i obramowań,kolory, itp.).
+- przenieść wykresy do plotly::ggplotly().
+- dodać do obecnego modelu zmienne jakościowe.
+- opisać model.
+- w budowie modelu skorzystać z zajęć 'wielowymiarowej analizy danych' - jakieś PCA.
+- pogrupować listę pomysłów w działy np. opisy,estetyka,modele itp. oraz dodać znaczek że aktualnie ktoś się tym zajmuje np. (*).
+
+
 ```{r echo=FALSE , warning=FALSE, include=FALSE}
 library(openxlsx)
 library(knitr)
@@ -374,7 +382,7 @@ base::sapply(list(price=data$price,num_subscribers=data$num_subscribers,
 
 ```{r}
 model_pusty <- lm(num_subscribers~-1,data = data_cleaned)
-model_pelny <- lm(num_subscribers~price+num_reviews+num_lectures+content_duration, data=data_cleaned)
+model_pelny <- lm(num_subscribers~price+num_reviews+num_lectures+content_duration + as.factor(level)+as.factor(subject),data=data_cleaned)
 ```
 
 Selekcja w przód
@@ -400,22 +408,29 @@ Na podstawie częściowego testu F dochodzimy do wniosku, że bardziej złożony
 
 ```{r}
 plot(model2,which = 4:5)
+cooks.distance(model2)[which(cooks.distance(model2)>0.5)]
 ```
 
-Na podstawie wyżej ukazanych wykresów możemy stwierdzić, że w modelu znajdują się obserwacje nietypowe. Są to obserwacje numer 3199,3225 oraz 2822
+Na podstawie wyżej ukazanych wykresów możemy stwierdzić, że w modelu znajdują się obserwacje nietypowe. Są to obserwacje numer 3199,3225,3227 oraz 2822
 
 
 ```{r}
-data_new <- data_cleaned[-3225,][-3199,][-2882,]
+data_new <- data_cleaned[-3227,][-3225,][-3199,][-2882,]
+
 ```
 
 ```{r}
-model2 <- lm(num_subscribers~price+num_reviews+content_duration, data=data_new)
+model2 <- lm(num_subscribers ~ price + num_reviews + as.factor(level) + as.factor(subject), data=data_new)
 ```
 
 ```{r}
 summary(model2)
 ```
+
+```{r}
+plot(model2)
+```
+
 
 
 ## Podstawowe założenia
@@ -453,11 +468,15 @@ Wszędzie wszystko odrzucamy.
 
 
 ```{r}
-nowa_wart <- data.frame(price=min(data$price),num_reviews=min(data$num_reviews),content_duration=min(data$content_duration)) 
-pred <- predict(model2,newdata=nowa_wart,interval='predict')
+nowa_wart <- data.frame(price=min(data$price),num_reviews=min(data$num_reviews),content_duration=min(data$content_duration),level=as.factor('Intermediate Level'),subject=as.factor('Web Development')) 
+pred <- predict(model2,nowa_wart,interval = 'predict')
 pred
 ```
-
-
+źle bardzo źle
 
 ## Wnioski
+
+
+
+
+
