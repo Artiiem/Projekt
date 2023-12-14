@@ -505,11 +505,101 @@ nowa_wart <- data.frame(price=min(data$price),num_reviews=min(data$num_reviews),
 pred <- predict(model2,nowa_wart,interval = 'predict')
 pred
 ```
-źle bardzo źle
 
-## Wnioski
+### PCA
+
+```{r}
+data_cleaned
+X <- data_cleaned[,c(3,5,6,8)]
+X
+pr <- prcomp(X,scale=T)
+
+pr$rotation
+pr$x %>% head
+
+pr %>% 
+  summary()
+
+library(factoextra)
+fviz_screeplot(pr)
+
+fviz_contrib(pr,choice = 'var',axes=1)
+fviz_contrib(pr,choice = 'var',axes=2)
+#fviz_contrib(pr,choice = 'var',axes=3)
+```
+
+
+```{r}
+PC1 <- pr$x[,1]
+PC2 <- pr$x[,2]
+#PC3 <- pr$x[,3]
+
+mod <- lm(data_cleaned$`num_subscribers`~PC1+PC2)
+
+summary(mod)
+```
+
+
+```{r}
+plot(mod,which=1:6)
+
+shapiro.test(mod$residuals)
+nortest::ad.test(mod$residuals)
+nortest::cvm.test(mod$residuals)
+resettest(mod)
+raintest(mod)
+bptest(mod)
+dwtest(mod)
+```
 
 
 
 
+################
 
+```{r}
+data_cleaned
+X <- data_cleaned[,c(3,4,5,6)]
+X
+pr <- prcomp(X,scale=T)
+
+pr$rotation
+pr$x %>% head
+
+pr %>% 
+  summary()
+
+library(factoextra)
+fviz_screeplot(pr)
+
+fviz_contrib(pr,choice = 'var',axes=1)
+fviz_contrib(pr,choice = 'var',axes=2)
+fviz_contrib(pr,choice = 'var',axes=3)
+```
+
+
+```{r}
+PC1 <- pr$x[,1]
+PC2 <- pr$x[,2]
+PC3 <- pr$x[,3]
+
+mod <- lm(data_cleaned$`content_duration`~PC1+PC2+PC3)
+
+summary(mod)
+```
+
+
+las losowy 
+
+
+```{r}
+plot(mod,which=1:6)
+
+shapiro.test(mod$residuals)
+nortest::ad.test(mod$residuals)
+nortest::cvm.test(mod$residuals)
+resettest(mod)
+raintest(mod)
+bptest(mod)
+dwtest(mod)
+```
