@@ -14,9 +14,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 Do zrobienia w projekcie:
-- Lepsza wizualizacja i jej opis
+- Lepsza wizualizacja i jej opis  (*) - Kamil
 - ładna wizualizacja naszych wyników, np wyniki testów w ładnej tabeli
-- Ładny opis wyników także
+- Ładny opis wyników także  (*) - Kamil
 
 - Przenieść na Quarto, bo ładniej wygląda
 
@@ -32,6 +32,7 @@ Do zrobienia w projekcie:
 - opisać model.
 - w budowie modelu skorzystać z zajęć 'wielowymiarowej analizy danych' - jakieś PCA.
 - pogrupować listę pomysłów w działy np. opisy,estetyka,modele itp. oraz dodać znaczek że aktualnie ktoś się tym zajmuje np. (*).
+- zrobić las losowy  (*) - Kamil
 
 
 ```{r echo=FALSE , warning=FALSE, include=FALSE}
@@ -44,6 +45,7 @@ library(gtsummary)
 library(lmtest)
 library(nortest)
 library(ivreg)
+library(caret)
 
 library(rstatix)
 ```
@@ -593,13 +595,26 @@ las losowy
 
 
 ```{r}
-plot(mod,which=1:6)
+library(randomForest)
+set.seed(42)  # używamy seed dla powtarzalności wyników
 
-shapiro.test(mod$residuals)
-nortest::ad.test(mod$residuals)
-nortest::cvm.test(mod$residuals)
-resettest(mod)
-raintest(mod)
-bptest(mod)
-dwtest(mod)
+# używamy tej komendy, gdy mamy jakieś braki danych, las losowy uzupełnia te braki, co jest pomocne w późniejszej analizie
+# rfImpute(num_subscribers ~ ., data = data_cleaned, iter = 6)  # przewidujemy liczbę subskrybentów, budujemy 6 lasów losowych
+# u nas nie ma braków danych, więc jej nie używamy
+
+# dzielenie danych na zbiór treningowy i testowy
+split = createDataPartition(data_cleaned$num_subscribers, p = .8, list = F, times = 1)  # podział danych 
+data_train = data_cleaned[split,]
+data_test = data_clean[-split,]
+
+model = randomForest(num_subscribers ~ .-level, data = data_train, proximity=  T)
+
+# ocena modelu
+predi = predict(model, data_test)
+result = postResample(pred = predi, obs = data_test$num_subscribers)
+result
+varImpPlot(model) # wyższa wartość wskazuje wyższą ważność zmiennej w modelu, level ma małą w porównaniu do innych więc można ją wyżucić z modelu
+
+# można jeszcze dodać wykresy błędów, ale nie wiem czy jest sens, kiedyś sprawdzę
 ```
+Po usunięciu level z modelu zwiększyło się Rsquared, co oznacza, że model wyjaśnia więcej zmienności zmiennej objaśnianej
