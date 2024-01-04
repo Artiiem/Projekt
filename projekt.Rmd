@@ -14,6 +14,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 Do zrobienia w projekcie:
+
+Poszukać inną bazę danych, w której jest więcej rekordów z nowszych lat, bo w tej bazie danych rekordy się kończą w połowie 2017, co burzy interpretacji w czasie
+
+
+
 - Lepsza wizualizacja i jej opis  (*) - Kamil
 - ładna wizualizacja naszych wyników, np wyniki testów w ładnej tabeli
 - Ładny opis wyników także  (*) - Kamil
@@ -147,13 +152,12 @@ gt(head(data,5)) %>%
 
 ## Czyszczenie i przygotowanie danych
 
-Czyszczenie danych
+Sprawdzenie czy baza danych zawiera jakieś brakujące wartości
 
 ```{r}
-data_clean <- data %>%
-  filter(!is.na(price)) %>%
-  mutate(price = as.numeric(price))
+length(data[is.na(data)])
 ```
+Baza danych nie zawiera brakujących wartości
 
 Sprawdzenie czy nie ma powtarzających się rekordów
 
@@ -163,19 +167,22 @@ liczba = nrow(powtarzajace)
 liczba
 ```
 
-W pliku znalazło się 6 takich samych rekordów, więc je teraz usunę
+W pliku znalazło się 6 takich samych rekordów, więc zostaną usunięte
 
 ```{r}
-data_cleaned <- data %>% distinct()
+df <- data %>% distinct()
 ```
 
 Transformacja danych
 
 ```{r}
-data$level <- factor(data$level, levels = names(sort(table(data$level), decreasing = TRUE)))  # zamiana chr na posortowany factor
-data$is_paid = factor(data$is_paid)  # zamiana chr na factor
-data$subject = factor(data$subject)
-data$published_timestamp = substr(data$published_timestamp, 1, 7) # skrócenie daty do miesiąca i roku
+df$level <- factor(df$level, levels = names(sort(table(df$level), decreasing = TRUE)))  # zamiana chr na posortowany factor
+df$is_paid = factor(df$is_paid)  # zamiana chr na factor
+df$subject = factor(df$subject)
+#df$published_timestamp = substr(df$published_timestamp, 1, 10) # skrócenie daty do miesiąca i roku
+df$published_timestamp =ymd_hms(df$published_timestamp)  # zamiana daty
+df$year <- year(df$published_timestamp)
+df$month <- month(df$published_timestamp)
 ```
 
 ## Analiza eksploracyjna
@@ -183,7 +190,7 @@ data$published_timestamp = substr(data$published_timestamp, 1, 7) # skrócenie d
 Podstawowe statystyki
 
 ```{r}
-data %>% 
+df %>% 
   select(where(is.numeric)) %>% 
   get_summary_stats(show=c('min','q1','median','mean','q3','max')) %>% 
   select(-n) %>% 
@@ -263,18 +270,79 @@ Ogólnie, te statystyki wskazują na dużą różnorodność kursów dostępnych
 ## Wizualizacja danych
 
 ----------- Zrobić wykres ilości wszystkiego w czasie
+Liczba kursów opublikwoanych każdego roku
+```{r}
+ggplot(df, aes(x=year, fill= is_paid)) +
+  geom_bar() +
+  theme_minimal() +
+  labs(title="Liczba kursów opublikowanych każdego roku", x="Rok", y="Liczba kursów")
 
+```
+Ogólna liczba kursów rośnie z roku na rok, co wskazuje na wzrost popularności i/lub dostępności kursów online.
+
+Kursy płatne stanowią większość wszystkich opublikowanych kursów w każdym roku, co sugeruje, że istnieje stały popyt na kursy premium, które prawdopodobnie oferują bardziej zaawansowaną lub specjalistyczną wiedzę.
+
+W 2012 roku liczba kursów darmowych była znacznie niższa w porównaniu do płatnych, co może wskazywać, że na początku obserwowanego okresu większość dostawców treści preferowała tworzenie kursów płatnych.
+
+W 2014 roku nastąpił znaczący wzrost liczby kursów, zarówno płatnych, jak i darmowych, co może oznaczać rosnące zainteresowanie edukacją online i/lub zwiększenie się liczby dostawców kursów.
+
+W latach 2016 i późniejszych liczba kursów darmowych stabilizuje się, podczas gdy liczba kursów płatnych nadal rośnie, co może wskazywać na zwiększenie się różnorodności i dostępności płatnych opcji dla uczących się.
+
+Widać również, że proporcja kursów darmowych do płatnych pozostaje stosunkowo stała w latach 2014-2016, co może sugerować ustabilizowanie się modelu biznesowego dla kursów online.
+```{r}
+df %>% 
+  group_by(year, is_paid) %>%
+  summarize(Average_subs= mean(num_subscribers)) %>%
+  ggplot(aes(x=year, y=Average_subs, color=is_paid)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title="Średnia liczba subskrybentów w ciągu lat (płatne/niepłatne)", x="Rok", y="Średnia liczba subskrybentów")
+```
+Ogólny trend: Istnieje ogólny spadkowy trend w średniej liczbie subskrybentów zarówno dla kursów płatnych, jak i darmowych. To wskazuje na to, że średnia popularność kursów zmniejsza się z roku na rok.
+
+Stosunek płatnych do darmowych kursów: Kursy płatne doświadczały większego spadku w średniej liczbie subskrybentów niż kursy darmowe. To może wskazywać, że użytkownicy mogą preferować mniej kosztowne opcje edukacji online.
+
+Zmieniające się preferencje: Spadek średniej liczby subskrybentów, zwłaszcza w przypadku kursów płatnych, może odzwierciedlać zmieniające się preferencje konsumentów, być może z powodu pojawienia się nowych platform, metod dostarczania treści, lub zwiększonej wrażliwości cenowej subskrybentów.
 Wizualizacja rozkładu ceny kursów
 
-```{r}
-ggplot(data, aes(x = price)) + 
-  geom_histogram(bins = 30, fill = "blue", color = "black") +
-  theme_minimal() +
-  labs(title = "Rozkład ceny kursów", x = "Cena", y = "Liczba kursów")
-```
+padek zainteresowania w czasie: Średnia liczba subskrybentów zarówno dla kursów płatnych, jak i niepłatnych wykazuje tendencję spadkową w badanym okresie. To może wskazywać na spadek ogólnego zainteresowania daną platformą kursów online lub na rosnącą konkurencję w tej przestrzeni.
+
+Większy spadek dla kursów płatnych: Wykres pokazuje, że spadek średniej liczby subskrybentów jest bardziej wyraźny w przypadku kursów płatnych. To może sugerować, że użytkownicy są bardziej skłonni do rezygnacji z płatnych subskrypcji w obliczu alternatywnych, potencjalnie tańszych lub darmowych źródeł nauki.
+
+Wczesne nasycenie rynku: Wysoka początkowa średnia liczba subskrybentów dla płatnych kursów w 2012 roku może wskazywać na wczesne nasycenie rynku, gdzie pionierskie kursy przyciągnęły dużą liczbę użytkowników. Z biegiem czasu, gdy rynek się rozrastał i pojawiało się więcej opcji, średnia liczba subskrybentów na kurs mogła spadać.
+
+Stabilizacja dla kursów niepłatnych: Linia trendu dla kursów niepłatnych wydaje się stabilizować w ostatnich latach. Może to wskazywać na utrzymujące się, stałe zainteresowanie darmowymi kursami, które mogą służyć jako nisko ryzykowna opcja dla osób chcących kontynuować naukę bez inwestycji finansowych.
 
 ```{r}
-data %>%
+df$price_range <- cut(df$price, 
+                      breaks = seq(0, 200, by = 20),
+                      labels = c("0-20", "21-40", "41-60", "61-80", "81-100", 
+                                 "101-120", "121-140", "141-160", "161-180", "181-200"),
+                      include.lowest = TRUE, right = FALSE)
+
+# Tworzenie wykresu
+ggplot(df, aes(x = price_range, fill = level)) +
+  geom_bar() +
+  theme_minimal() +
+  labs(title = "Rozkład cen kursów",
+       x = "Przedział cenowy",
+       y = "Liczba kursów")
+```
+Największa liczba kursów jest dostępna w najniższym przedziale cenowym (0-20), co sugeruje, że kursy na poziomie początkującym są najbardziej dostępne cenowo lub że organizatorzy kursów preferują oferować kursy wstępne po niższych cenach, aby przyciągnąć więcej uczestników.
+
+W przedziale cenowym 0-20, największą część stanowią kursy na poziomie początkującym, co może wskazywać na to, że istnieje duża liczba osób rozpoczynających naukę, które szukają tańszych kursów, aby zacząć.
+
+Liczba kursów na poziomie zaawansowanym (Expert Level) jest znacznie mniejsza we wszystkich przedziałach cenowych. Może to sugerować, że takie kursy są rzadsze i prawdopodobnie bardziej wyspecjalizowane, co jest typowe dla ofert edukacyjnych na wyższym poziomie zaawansowania.
+
+W przedziałach cenowych od 21 do 160, liczba kursów na poziomie początkującym i średnio zaawansowanym (Intermediate Level) jest podobna, co może wskazywać na równomierną dystrybucję tych poziomów zaawansowania w średnim zakresie cenowym.
+
+W najwyższym przedziale cenowym (181-200), kursy na poziomie początkującym stanowią znaczącą mniejszość, co sugeruje, że kursy dla początkujących są rzadko oferowane po wysokich cenach, być może ze względu na mniejszą skłonność tej grupy do inwestowania w droższe kursy.
+
+Można zauważyć, że w miarę wzrostu przedziału cenowego, ogólna liczba dostępnych kursów maleje. To wskazuje, że istnieje zdecydowanie więcej kursów tańszych niż droższych, co jest typowym modelem w wielu branżach edukacyjnych.
+
+Ogólnie rzecz biorąc, wykres sugeruje, że dostępność kursów maleje wraz ze wzrostem cen, a największa liczba kursów jest oferowana na poziomie początkującym w najniższym przedziale cenowym.
+```{r}
+df %>%
   group_by(subject) %>%
   summarise(count = n()) %>%
   ggplot(aes(x = reorder(subject, -count), y = count, fill = subject)) +
@@ -290,12 +358,12 @@ Wysoka liczba kursów w kategoriach "Finanse Biznesowe" i "Rozwój Stron Interne
 
 
 ```{r}
-data_subscribers <- data %>% 
+data_subscribers <- df %>% 
   filter(num_subscribers < 10000) %>% 
   select(num_subscribers) %>% 
   mutate(category = "Subscribers")
 
-data_reviews <- data %>% 
+data_reviews <- df %>% 
   filter(num_reviews < 1000) %>% 
   select(num_reviews) %>% 
   mutate(category = "Reviews")
@@ -323,7 +391,7 @@ Analiza Skośności: Obie dystrybucje wykazują wysoką skośność pozytywną, 
 Podsumowując, wykresy te mogą wskazywać na rynek zdominowany przez kilka bardzo popularnych kursów, z dużą liczbą kursów walczących o uwagę i subskrypcje. Dane te mogą być przydatne dla twórców kursów w celu zrozumienia dynamiki rynku i w identyfikacji potencjalnych obszarów do rozwoju ich oferty edukacyjnej.
 
 ```{r}
-ggplot(data, aes(x = level, fill = level)) +
+ggplot(df, aes(x = level, fill = level)) +
   geom_bar() +
   labs(title = "Rozkład poziomu kursów", x = "Poziom", y = "Liczba kursów") +
   theme_minimal() + 
@@ -355,8 +423,8 @@ Subject zmieniam na
 3 - Web Development
 ```{r}
 data$is_paid <- ifelse(data$is_paid == "True", 1, 0)
-data$level = as.integer(data$level) - 1
-data$subject = as.integer(data$subject) - 1
+data$level = as.integer(factor(data$level)) -1 
+data$subject = as.integer(factor(data$subject)) - 1
 ```
 
 ```{r}
@@ -378,9 +446,9 @@ Ponadto, obserwacja negatywnej korelacji między statusem płatności kursu a li
 ### Miary asymetrii i koncentracji
 
 ```{r}
-base::sapply(list(price=data$price,num_subscribers=data$num_subscribers,
-                  num_reviews=data$num_reviews,num_lectures=data$num_lectures,
-                  content_duration=data$content_duration),
+base::sapply(list(price=df$price,num_subscribers=df$num_subscribers,
+                  num_reviews=df$num_reviews,num_lectures=df$num_lectures,
+                  content_duration=df$content_duration),
              simplify = TRUE,
              FUN =  function(x){
              c(skewness = round(skewness(x),3),
@@ -416,8 +484,8 @@ base::sapply(list(price=data$price,num_subscribers=data$num_subscribers,
 ## Modelowanie danych
 
 ```{r}
-model_pusty <- lm(num_subscribers~-1,data = data_cleaned)
-model_pelny <- lm(num_subscribers~price+num_reviews+num_lectures+content_duration + as.factor(level)+as.factor(subject),data=data_cleaned)
+model_pusty <- lm(num_subscribers~-1,data = df)
+model_pelny <- lm(num_subscribers~price+num_reviews+num_lectures+content_duration + as.factor(level)+as.factor(subject),data=df)
 ```
 
 Selekcja w przód
@@ -450,7 +518,7 @@ Na podstawie wyżej ukazanych wykresów możemy stwierdzić, że w modelu znajdu
 
 
 ```{r}
-data_new <- data_cleaned[-3227,][-3225,][-3199,][-2882,]
+data_new <- df[-3227,][-3225,][-3199,][-2882,]
 
 ```
 
@@ -503,7 +571,7 @@ Wszędzie wszystko odrzucamy.
 
 
 ```{r}
-nowa_wart <- data.frame(price=min(data$price),num_reviews=min(data$num_reviews),content_duration=min(data$content_duration),level=as.factor('Intermediate Level'),subject=as.factor('Web Development')) 
+nowa_wart <- data.frame(price=min(df$price),num_reviews=min(df$num_reviews),content_duration=min(df$content_duration),level=as.factor('Intermediate Level'),subject='Web Development') 
 pred <- predict(model2,nowa_wart,interval = 'predict')
 pred
 ```
@@ -511,8 +579,8 @@ pred
 ### PCA
 
 ```{r}
-data_cleaned
-X <- data_cleaned[,c(3,5,6,8)]
+df
+X <- df[,c(3,5,6,8)]
 X
 pr <- prcomp(X,scale=T)
 
@@ -536,7 +604,7 @@ PC1 <- pr$x[,1]
 PC2 <- pr$x[,2]
 #PC3 <- pr$x[,3]
 
-mod <- lm(data_cleaned$`num_subscribers`~PC1+PC2)
+mod <- lm(df$`num_subscribers`~PC1+PC2)
 
 summary(mod)
 ```
@@ -560,8 +628,8 @@ dwtest(mod)
 ################
 
 ```{r}
-data_cleaned
-X <- data_cleaned[,c(3,4,5,6)]
+df
+X <- df[,c(3,4,5,6)]
 X
 pr <- prcomp(X,scale=T)
 
@@ -585,7 +653,7 @@ PC1 <- pr$x[,1]
 PC2 <- pr$x[,2]
 PC3 <- pr$x[,3]
 
-mod <- lm(data_cleaned$`content_duration`~PC1+PC2+PC3)
+mod <- lm(df$`content_duration`~PC1+PC2+PC3)
 
 summary(mod)
 ```
@@ -599,13 +667,13 @@ library(randomForest)
 set.seed(42)  # używamy seed dla powtarzalności wyników
 
 # używamy tej komendy, gdy mamy jakieś braki danych, las losowy uzupełnia te braki, co jest pomocne w późniejszej analizie
-# rfImpute(num_subscribers ~ ., data = data_cleaned, iter = 6)  # przewidujemy liczbę subskrybentów, budujemy 6 lasów losowych
+# rfImpute(num_subscribers ~ ., df = df, iter = 6)  # przewidujemy liczbę subskrybentów, budujemy 6 lasów losowych
 # u nas nie ma braków danych, więc jej nie używamy
 
 # dzielenie danych na zbiór treningowy i testowy
-split = createDataPartition(data_cleaned$num_subscribers, p = .8, list = F, times = 1)  # podział danych 
-data_train = data_cleaned[split,]
-data_test = data_clean[-split,]
+split = createDataPartition(df$num_subscribers, p = .8, list = F, times = 1)  # podział danych 
+data_train = df[split,]
+data_test = df[-split,]
 
 model = randomForest(num_subscribers ~ .-level, data = data_train, proximity=  T)
 
