@@ -9,7 +9,7 @@ format:
     self-contained: true
 editor: visual
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 Do zrobienia w projekcie:
@@ -18,28 +18,25 @@ Poszukać inną bazę danych, w której jest więcej rekordów z nowszych lat, b
 
 Treść:
 
--    Ładny opis wyników także (\*) - Kamil
+-   Ładny opis wyników także (\*) - Kamil
 
-```{=html}
 <!-- -->
-```
--    zrobić las losowy (\*) - Kamil
 
-```{=html}
+-   zrobić las losowy (\*) - Kamil
+
 <!-- -->
-```
--    opisać model (\*) - Artur
 
-```{=html}
+-   opisać model (\*) - Artur
+
 <!-- -->
-```
--    praca nad modelem (\*) - Artur
 
--    Może zrobić korelacje zmiennych jakościowych np. test chi\^2 i inne
+-   praca nad modelem (\*) - Artur
 
--    zrobić więcej modeli
+-   Może zrobić korelacje zmiennych jakościowych np. test chi\^2 i inne
 
--    dodać do obecnego modelu zmienne jakościowe.
+-   zrobić więcej modeli
+
+-   dodać do obecnego modelu zmienne jakościowe.
 
 Wizualia:
 
@@ -62,10 +59,11 @@ library(lmtest)
 library(nortest)
 library(ivreg)
 library(caret)
+library(reshape2)
 library(rstatix)
 ```
 
-##  Wczytanie danych
+## Wczytanie danych
 
 ```{r}
 data <- read.csv("udemy_courses.csv")
@@ -120,47 +118,51 @@ gt(head(data,5)) %>%
   )
 ```
 
-##  Zmienne
+## Zmienne
 
--    course_title - Tytuł kursu.
+-   course_title - Tytuł kursu.
 
--    is_paid - Informuje o tym, czy dany kurs jest płatny.
+-   is_paid - Informuje o tym, czy dany kurs jest płatny.
 
--    price - Ukazuje cenę kursu wyrażoną w dolarach.
+-   price - Ukazuje cenę kursu wyrażoną w dolarach.
 
--    num_subscribers - Ukazuje liczbę subskrybentów kursu.
+-   num_subscribers - Ukazuje liczbę subskrybentów kursu.
 
--    num_reviews - Ukazuje liczbę recenzji kursu.
+-   num_reviews - Ukazuje liczbę recenzji kursu.
 
--    num_lectures - Ukazuje liczbę wykładów kursu.
+-   num_lectures - Ukazuje liczbę wykładów kursu.
 
--    level - Przedstawia poziom trudności kursu podzielną na cztery kategorie:
+-   level - Przedstawia poziom trudności kursu podzielną na cztery kategorie:
 
-    -    *Beginner Level* - poziom początkujący.
+```         
+-    *Beginner Level* - poziom początkujący.
 
-    -    *Intermediate Level* - poziom średniozaawansowany.
+-    *Intermediate Level* - poziom średniozaawansowany.
 
-    -    *Expert Level* - poziom zaawansowany.
+-    *Expert Level* - poziom zaawansowany.
 
-    -    *All levels* - wszystkie poziomy.
+-    *All levels* - wszystkie poziomy.
+```
 
--    content_duration - Ukazuje długość kursu wyrażoną w godzinach.
+-   content_duration - Ukazuje długość kursu wyrażoną w godzinach.
 
--    published_timestamp - Przedstawia datę publikacji kursu o następującej strukturze:
+-   published_timestamp - Przedstawia datę publikacji kursu o następującej strukturze:
 
 *rok-miesiąc-dzień T - godzina:minuta:sekunda Z*
 
--    subject - Przedstawia temat kursu wyrażonego w czterech różnych kategoriach:
+-   subject - Przedstawia temat kursu wyrażonego w czterech różnych kategoriach:
 
-    -    *Business Finance* - finanse
+```         
+-    *Business Finance* - finanse
 
-    -    *Graphic Design* -projekt graficzny.
+-    *Graphic Design* -projekt graficzny.
 
-    -    *Musical Instruments* - muzyczne instrumenty.
+-    *Musical Instruments* - muzyczne instrumenty.
 
-    -    *Web Development* - tworzeniestron internetowych.
+-    *Web Development* - tworzeniestron internetowych.
+```
 
-##  Czyszczenie i przygotowanie danych
+## Czyszczenie i przygotowanie danych
 
 Sprawdzenie czy baza danych zawiera jakieś brakujące wartości
 
@@ -193,7 +195,6 @@ df$subject = factor(df$subject)
 #df$published_timestamp = substr(df$published_timestamp, 1, 10) # skrócenie daty do miesiąca i roku
 df$published_timestamp =ymd_hms(df$published_timestamp)  # zamiana daty
 df$year <- year(df$published_timestamp)
-df$month <- month(df$published_timestamp)
 ```
 
 ## Analiza eksploracyjna
@@ -275,9 +276,9 @@ Czas trwania treści: Czas trwania treści kursów ma szeroki zakres od 0 do 78,
 
 Ogólnie, te statystyki wskazują na dużą różnorodność kursów dostępnych na Udemy, zarówno pod względem ceny, zawartości, jak i popularności. Możemy również wywnioskować, że kursy są w różnych przedziałach cenowych, co czyni je dostępnymi dla różnych grup demograficznych, a także pokazuje, że niektóre kursy są wyjątkowo popularne, co może wskazywać na wysoką jakość lub skuteczne marketingowe wsparcie.
 
-##  Wizualizacja danych
+## Wizualizacja danych
 
-\-\-\-\-\-\-\-\-\-\-- Zrobić wykres ilości wszystkiego w czasie
+----------- Zrobić wykres ilości wszystkiego w czasie
 
 Liczba kursów opublikwoanych każdego roku
 
@@ -422,36 +423,60 @@ Niewielka Liczba Kursów dla Zaawansowanych: Znacznie mniejsza liczba kursów je
 
 Podsumowując, wykres wskazuje na koncentrację oferty edukacyjnej na kursy ogólne i dla początkujących, przy ograniczonej ofercie dla uczących się na wyższych poziomach zaawansowania, co może wskazywać na potencjalne nisze rynkowe do rozwoju.
 
-###  Macierz korelacji
+### Macierz korelacji
 
-Zamiana danych jakościowych na ilościowe, aby móc je później przeanalizować
+Najpierw przeprowadzę kodowanie danych, aby umożliwić ich analizę.
 
-Level zmieniam na:
+Kodowanie danych jakościowych (nazywane też kategoryzacją lub enkodowaniem) to proces przekształcania danych niemierzalnych ilościowo, takich jak tekst lub etykiety, w formę liczbową, którą można wykorzystać w analizie statystycznej i modelowaniu matematycznym.
 
-0.   All Levels
-1.   Beginner Level
-2.   Expert Level
-3.   Intermediate Level
-
-Subject zmieniam na:
-
-0.   Business Finance
-1.   Graphic Design
-2.   Musical Instruments
-3.   Web Development
+W praktyce dane jakościowe, takie jak płeć (mężczyzna, kobieta), kolor (czerwony, zielony, niebieski) czy poziom edukacji (podstawowy, średni, wyższy), są transformowane do postaci liczbowej, aby umożliwić przeprowadzenie takich analiz jak regresja, klasyfikacja, czy analiza korelacji.
 
 ```{r}
-data$is_paid <- ifelse(data$is_paid == "True", 1, 0)
-data$level = as.integer(factor(data$level)) -1 
-data$subject = as.integer(factor(data$subject)) - 1
+dane_zakodowane = df %>% 
+  select(is_paid:price_range, -c(published_timestamp, price_range)) %>% 
+  mutate_if(is.factor, as.numeric)
+
+macierz_korelacji <- cor(dane_zakodowane, use = "complete.obs")
+dane_do_wykresu = melt(macierz_korelacji)  
+# Przed melt(): Macierz korelacji jest kwadratowa, z nazwami zmiennych zarówno w kolumnach, jak i wierszach. Wartości w komórkach macierzy reprezentują współczynniki korelacji między zmiennymi.
+
+#Po melt(): Wynikowym formatem jest data frame, w którym każdy rząd reprezentuje parę zmiennych (jedna zmienna w kolumnie Var1, druga w Var2) wraz z odpowiadającą im wartością korelacji (w kolumnie value).
+
+#Przykładowo, jeśli masz macierz korelacji z trzema zmiennymi A, B, C, to po zastosowaniu melt otrzymasz data frame z kolumnami Var1, Var2 i value, gdzie każdy rząd reprezentuje parę zmiennych (np. A-B, A-C, B-C) i ich korelację.
+# Dostosowanie nazw zmiennych
+dane_do_wykresu$Var1 <- factor(dane_do_wykresu$Var1, labels = names(dane_zakodowane))
+dane_do_wykresu$Var2 <- factor(dane_do_wykresu$Var2, labels = names(dane_zakodowane))
+
+# Tworzenie wykresu z wartościami korelacji
+ggplot(dane_do_wykresu, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1, 1), space = "Lab", 
+                       name="Korelacja") +
+  geom_text(aes(label = sprintf("%.2f", value)), color = "black", size = 3) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 8),
+        axis.text.y = element_text(size = 8),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()) +
+  coord_fixed()
 ```
 
-```{r}
-Cor_mat = data[, c(2:8, 10)]
-chart.Correlation(Cor_mat, histogram = TRUE)
-```
+1.  **Zależność Czy płatny a Liczba Subskrybentów**: Istnieje słaba negatywna korelacja między tym czy kurs jest płatny, a liczbą subskrybentów (-0.27). Może to oznaczać, że te kursy za które trzeba płacić mają tendencję do posiadania mniejszej liczby subskrybentów w porównaniu z kursami bezpłatnymi.
 
-###  Kilka obserwacji z danej macierzy korelacji
+2.  **Brak Silnej Korelacji Między długością kursu a jego Poziomem**: Korelacja między **`level`** a **`content_duration`** jest bliska zeru (-0.06), co sugeruje brak związku między poziomem trudności kursu a jego długością.
+
+3.  **Silna Korelacja między Liczbą Recenzji a Liczbą Subskrybentów**: Istnieje stosunkowo silna korelacja dodatnia (0.65) między liczbą recenzji a liczbą subskrybentów, co sugeruje, że kursy z większą liczbą subskrybentów mają tendencję do otrzymywania większej liczby recenzji.
+
+4.  **Wysoka Korelacja między Liczbą Wykładów a Czasem Trwania Treści**: Wysoka korelacja (0.8) między **`num_lectures`** a **`content_duration`** wskazuje, że kursy z większą liczbą wykładów zazwyczaj mają dłuższą łączną długość treści.
+
+5.  **Niska Korelacja Poziomu z Innymi Zmiennymi**: Poziom kursu ma stosunkowo niską korelację z innymi zmiennymi, co wskazuje, że nie jest ona głównym czynnikiem wpływającym na inne aspekty kursu, takie jak liczba subskrybentów czy liczba wykładów.
+
+6.  **Małe Korelacje Czassu Publikacji, płatności kursu oraz poziomu**: Zmienne **`year`**, **`is_paid`** oraz `level`mają niskie wartości korelacji z innymi zmiennymi, co może sugerować, że czas publikacji, fakt, czy kurs jest płatny oraz jaki ma poziom nie mają silnego bezpośredniego wpływu na inne mierzone cechy kursów oraz wskazują, że nie jest one głównym czynnikiem wpływającym na inne aspekty kursu, takie jak liczba subskrybentów czy liczba wykładów.
+
+Podsumowując, wykres korelacji sugeruje, że niektóre aspekty kursów online, takie jak liczba wykładów i długość treści, są ściśle powiązane, podczas gdy inne czynniki, takie jak poziom zaawansowania, nie mają wyraźnego wpływu na te mierzone atrybuty.
+
+### Kilka obserwacji z danej macierzy korelacji
 
 Istnieje silna dodatnia korelacja między liczbą lekcji a całkowitym czasem trwania kursu. To wskazuje, że zwiększona liczba lekcji jest zazwyczaj skorelowana z dłuższym czasem dostępu do treści kursu, co jest zgodne z oczekiwaniami, że bogatsza w treści oferta edukacyjna wymaga więcej czasu na jej przyswojenie.
 
@@ -461,7 +486,7 @@ Z analizy wynika, że poziom trudności kursu, określony przez autora, nie wyka
 
 Ponadto, obserwacja negatywnej korelacji między statusem płatności kursu a liczbą subskrybentów może wskazywać na tendencję, że kursy oferowane bezpłatnie przyciągają większą liczbę uczestników. To zjawisko może podkreślać wpływ dostępności cenowej na decyzje o zapisaniu się na kurs przez potencjalnych uczestników.
 
-###  Miary asymetrii i koncentracji
+### Miary asymetrii i koncentracji
 
 ```{r}
 base::sapply(list(price=df$price,num_subscribers=df$num_subscribers,
@@ -498,7 +523,7 @@ base::sapply(list(price=df$price,num_subscribers=df$num_subscribers,
 
 ```
 
-##  Modelowanie danych
+## Modelowanie danych
 
 ```{r}
 model_pusty <- lm(num_subscribers~-1,data = df)
@@ -523,7 +548,7 @@ anova(model1,model2)
 
 Na podstawie częściowego testu F dochodzimy do wniosku, że bardziej złożony model jest lepszy od prostszego modelu. Zatem dalszej analizie podamy model2.
 
-##  Obserwacje nietypowe
+## Obserwacje nietypowe
 
 ```{r}
 plot(model2,which = 4:5)
@@ -549,7 +574,7 @@ summary(model2)
 plot(model2)
 ```
 
-##  Podstawowe założenia
+## Podstawowe założenia
 
 Liniowość
 
@@ -588,14 +613,14 @@ ad.test(model2$residuals)
 Wszędzie wszystko odrzucamy.
 
 ```{r}
-nowa_wart <- data.frame(price=min(df$price),num_reviews=min(df$num_reviews),content_duration=min(df$content_duration),level=as.factor('Intermediate Level'),subject='Web Development') 
-pred <- predict(model2,nowa_wart,interval = 'predict')
-pred
+#nowa_wart <- data.frame(price=min(df$price),num_reviews=min(df$num_reviews),content_duration=min(df$content_duration),level=as.factor('Intermediate Level'),subject='Web Development') 
+#pred <- predict(model2,nowa_wart,interval = 'predict')
+#pred
 
 
 ```
 
-###  PCA
+### PCA
 
 ```{r}
 df
