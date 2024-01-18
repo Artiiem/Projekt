@@ -134,15 +134,16 @@ gt(head(data,5)) %>%
 
 -   level - Przedstawia poziom trudności kursu podzielną na cztery kategorie:
 
-```         
--    *Beginner Level* - poziom początkujący.
-
--    *Intermediate Level* - poziom średniozaawansowany.
-
--    *Expert Level* - poziom zaawansowany.
-
--    *All levels* - wszystkie poziomy.
+```{=html}
+<!-- -->
 ```
+    -    *Beginner Level* - poziom początkujący.
+
+    -    *Intermediate Level* - poziom średniozaawansowany.
+
+    -    *Expert Level* - poziom zaawansowany.
+
+    -    *All levels* - wszystkie poziomy.
 
 -   content_duration - Ukazuje długość kursu wyrażoną w godzinach.
 
@@ -152,15 +153,16 @@ gt(head(data,5)) %>%
 
 -   subject - Przedstawia temat kursu wyrażonego w czterech różnych kategoriach:
 
-```         
--    *Business Finance* - finanse
-
--    *Graphic Design* -projekt graficzny.
-
--    *Musical Instruments* - muzyczne instrumenty.
-
--    *Web Development* - tworzeniestron internetowych.
+```{=html}
+<!-- -->
 ```
+    -    *Business Finance* - finanse
+
+    -    *Graphic Design* -projekt graficzny.
+
+    -    *Musical Instruments* - muzyczne instrumenty.
+
+    -    *Web Development* - tworzeniestron internetowych.
 
 ## Czyszczenie i przygotowanie danych
 
