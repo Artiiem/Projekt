@@ -20,10 +20,10 @@ Treść:
 -   zrobić las losowy (\*) - Kamil
 -   zrobić drzewo losowe, aby porównać z lasem (\*) - Kamil
 -   może jakiś model logitowy/probitowy
--   może analia wariancji? 
+-   może analia wariancji?
 -   opisać model (\*) - Artur
 -   praca nad modelem (\*) - Artur
--   zrobić inne macierze korelacji 
+-   zrobić inne macierze korelacji
 -   zrobić więcej modeli
 -   dodać do obecnego modelu zmienne jakościowe.
 -   dodanie opisu zbioru danych
@@ -112,47 +112,41 @@ gt(head(data,5)) %>%
 
 ## Zmienne
 
--   course_title - Tytuł kursu.
+-   `course_title` - Tytuł kursu.
 
--   is_paid - Informuje o tym, czy dany kurs jest płatny.
+-   `is_paid` - Informuje o tym, czy dany kurs jest płatny.
 
--   price - Ukazuje cenę kursu wyrażoną w dolarach.
+-   `price` - Ukazuje cenę kursu wyrażoną w dolarach.
 
--   num_subscribers - Ukazuje liczbę subskrybentów kursu.
+-   `num_subscribers` - Ukazuje liczbę subskrybentów kursu.
 
--   num_reviews - Ukazuje liczbę recenzji kursu.
+-   `num_reviews` - Ukazuje liczbę recenzji kursu.
 
--   num_lectures - Ukazuje liczbę wykładów kursu.
+-   `num_lectures` - Ukazuje liczbę wykładów kursu.
 
--   level - Przedstawia poziom trudności kursu podzielną na cztery kategorie:
+-   `level` - Przedstawia poziom trudności kursu podzielną na cztery kategorie:
 
-```         
--    *Beginner Level* - poziom początkujący.
+    -   *`Beginner Level`* - poziom początkujący.
 
--    *Intermediate Level* - poziom średniozaawansowany.
+    -   *`Intermediate Level`* - poziom średniozaawansowany.
 
--    *Expert Level* - poziom zaawansowany.
+    -   *`Expert Level`* - poziom zaawansowany.
 
--    *All levels* - wszystkie poziomy.
-```
+    -   *`All levels`* - wszystkie poziomy.
 
--   content_duration - Ukazuje długość kursu wyrażoną w godzinach.
+-   `content_duration` - Ukazuje długość kursu wyrażoną w godzinach.
 
--   published_timestamp - Przedstawia datę publikacji kursu o następującej strukturze:
+-   `published_timestamp` - Przedstawia datę publikacji kursu o następującej strukturze: *rok-miesiąc-dzień T - godzina:minuta:sekunda Z*
 
-*rok-miesiąc-dzień T - godzina:minuta:sekunda Z*
+-   `subject` - Przedstawia temat kursu wyrażonego w czterech różnych kategoriach:
 
--   subject - Przedstawia temat kursu wyrażonego w czterech różnych kategoriach:
+    -   *`Business Finance`* - finanse
 
-```         
--    *Business Finance* - finanse
+    -   *`Graphic Design`* -projekt graficzny.
 
--    *Graphic Design* -projekt graficzny.
+    -   *`Musical Instruments`* - muzyczne instrumenty.
 
--    *Musical Instruments* - muzyczne instrumenty.
-
--    *Web Development* - tworzeniestron internetowych.
-```
+    -   *`Web Development`* - tworzeniestron internetowych.
 
 ## Czyszczenie i przygotowanie danych
 
@@ -184,7 +178,7 @@ df$is_paid = factor(df$is_paid)  # zamiana chr na factor
 df$subject = factor(df$subject)
 #df$published_timestamp = substr(df$published_timestamp, 1, 10) # skrócenie daty do miesiąca i roku
 df$published_timestamp =ymd_hms(df$published_timestamp)  # zamiana daty
-df$year <- year(df$published_timestamp)
+df$year <- as.factor(year(df$published_timestamp))
 ```
 
 ## Analiza eksploracyjna
@@ -216,41 +210,11 @@ df %>%
     locations = list(
       cells_body(columns = variable),
       cells_column_labels(columns = variable)
-      )) %>% 
-  tab_style(
-    style = cell_fill(color = "#00ffff",alpha=0.7),
-    locations = cells_body(columns= max)
-    ) %>% 
-  tab_style(
-    style = cell_fill(color = "#00ffff",alpha=0.65),
-    locations = cells_body(columns= q3)
-    ) %>%
-    tab_style(
-    style = cell_fill(color = "#00ffff",alpha=0.6),
-    locations = cells_body(columns= mean)
-    ) %>%
-    tab_style(
-    style = cell_fill(color = "#00ffff",alpha=0.55),
-    locations = cells_body(columns= median)
-    ) %>%
-    tab_style(
-    style = cell_fill(color = "#00ffff",alpha=0.5),
-    locations = cells_body(columns= q1)
-    ) %>%
-    tab_style(
-    style = cell_fill(color = "#00ffff",alpha=0.45),
-    locations = cells_body(columns= min)
-    ) %>% 
-    tab_style(
-    style = list(
-      cell_fill(color = "black",alpha=0.9),
-      cell_text(color = 'white')
-    ),
-    locations = list(cells_body(columns= variable),cells_column_labels())
+      )
     )
 ```
-Dane z Udemy ukazują znaczną różnorodność w zakresie cen, popularności, recenzji, zawartości oraz czasu trwania kursów. Średnia cena kursu wynosi 66.05 USD, z kursami wahającymi się od darmowych do 200 USD. Liczba subskrybentów waha się od 0 do prawie 269,000, przy czym mediana wynosi 911,5, wskazując na dużą różnicę w popularności kursów. Średnia liczba recenzji to 156,3, co pokazuje, że kursy są oceniane, ale z dużymi różnicami. Kursy różnią się liczbą wykładów, z medianą 25, a czas trwania treści waha się od 0 do 78,5 godziny. Ogólnie, statystyki te wskazują na szeroką gamę kursów dostępnych na Udemy, z różnorodnymi cenami i zawartościami, które przyciągają różne grupy demograficzne, przy czym niektóre kursy osiągają wyjątkowo wysoką popularność.
-<!-- Na podstawie podanych statystyk, możemy wywnioskować kilka rzeczy o kursach zawartych w zbiorze danych:
+
+Dane z Udemy ukazują znaczną różnorodność w zakresie cen, popularności, recenzji, zawartości oraz czasu trwania kursów. Średnia cena kursu wynosi 66.05 USD, z kursami wahającymi się od darmowych do 200 USD. Liczba subskrybentów waha się od 0 do prawie 269,000, przy czym mediana wynosi 911,5, wskazując na dużą różnicę w popularności kursów. Średnia liczba recenzji to 156,3, co pokazuje, że kursy są oceniane, ale z dużymi różnicami. Kursy różnią się liczbą wykładów, z medianą 25, a czas trwania treści waha się od 0 do 78,5 godziny. Ogólnie, statystyki te wskazują na szeroką gamę kursów dostępnych na Udemy, z różnorodnymi cenami i zawartościami, które przyciągają różne grupy demograficzne, przy czym niektóre kursy osiągają wyjątkowo wysoką popularność. <!-- Na podstawie podanych statystyk, możemy wywnioskować kilka rzeczy o kursach zawartych w zbiorze danych:
 
 Różnorodność cen: Kursy na Udemy mają szeroki zakres cen, od darmowych (0 USD) do 200 USD. Średnia cena wynosi 66.05 USD, co wskazuje, że chociaż są kursy droższe, wiele z nich ma umiarkowaną cenę.
 
@@ -268,7 +232,7 @@ Ogólnie, te statystyki wskazują na dużą różnorodność kursów dostępnych
 
 ## Wizualizacja danych
 
-Liczba kursów opublikwoanych każdego roku
+Liczba kursów opublikowanych każdego roku
 
 ```{r}
 ggplot(df, aes(x=year, fill= is_paid)) +
@@ -277,8 +241,8 @@ ggplot(df, aes(x=year, fill= is_paid)) +
   labs(title="Liczba kursów opublikowanych każdego roku", x="Rok", y="Liczba kursów")
 
 ```
-Liczba kursów online rośnie z roku na rok, z przewagą kursów płatnych, co wskazuje na stały popyt na treści premium. Początkowo, w 2012 roku, kursy darmowe były mniej liczne niż płatne, ale od 2014 roku obserwuje się wzrost liczby obu typów kursów. Od 2016 roku liczba kursów darmowych stabilizuje się, podczas gdy płatne kursy nadal rosną, co wskazuje na zróżnicowanie i dostępność płatnych opcji. Proporcja kursów darmowych do płatnych wydaje się stabilna w ostatnich latach, co sugeruje ustabilizowanie się modelu biznesowego kursów online.
-<!-- Ogólna liczba kursów rośnie z roku na rok, co wskazuje na wzrost popularności i/lub dostępności kursów online.
+
+Liczba kursów online rośnie z roku na rok, z przewagą kursów płatnych, co wskazuje na stały popyt na treści premium. Początkowo, w 2012 roku, kursy darmowe były mniej liczne niż płatne, ale od 2014 roku obserwuje się wzrost liczby obu typów kursów. Od 2016 roku liczba kursów darmowych stabilizuje się, podczas gdy płatne kursy nadal rosną, co wskazuje na zróżnicowanie i dostępność płatnych opcji. Proporcja kursów darmowych do płatnych wydaje się stabilna w ostatnich latach, co sugeruje ustabilizowanie się modelu biznesowego kursów online. <!-- Ogólna liczba kursów rośnie z roku na rok, co wskazuje na wzrost popularności i/lub dostępności kursów online.
 
 Kursy płatne stanowią większość wszystkich opublikowanych kursów w każdym roku, co sugeruje, że istnieje stały popyt na kursy premium, które prawdopodobnie oferują bardziej zaawansowaną lub specjalistyczną wiedzę.
 
@@ -296,13 +260,13 @@ Wizualizacja rozkładu ceny kursów
 df %>% 
   group_by(year, is_paid) %>%
   summarize(Average_subs= mean(num_subscribers)) %>%
-  ggplot(aes(x=year, y=Average_subs, color=is_paid)) +
+  ggplot(aes(x=as.numeric(year), y=Average_subs, color=is_paid)) +
   geom_line() +
   theme_minimal() +
   labs(title="Średnia liczba subskrybentów w ciągu lat (płatne/niepłatne)", x="Rok", y="Średnia liczba subskrybentów")
 ```
-Dane pokazują spadek średniej liczby subskrybentów zarówno dla kursów płatnych, jak i darmowych, z większym spadkiem w przypadku kursów płatnych. To wskazuje na preferencje użytkowników dla tańszych opcji edukacji online i zmieniające się potrzeby konsumentów. Wysoka początkowa popularność płatnych kursów w 2012 roku sugeruje wczesne nasycenie rynku, ale z biegiem czasu zainteresowanie spadło, prawdopodobnie z powodu rosnącej konkurencji. Natomiast kursy darmowe wydają się utrzymywać stabilny poziom zainteresowania jako nisko ryzykowna opcja nauki.
-<!-- Ogólny trend: Istnieje ogólny spadkowy trend w średniej liczbie subskrybentów zarówno dla kursów płatnych, jak i darmowych. To wskazuje na to, że średnia popularność kursów zmniejsza się z roku na rok.
+
+Dane pokazują spadek średniej liczby subskrybentów zarówno dla kursów płatnych, jak i darmowych, z większym spadkiem w przypadku kursów płatnych. To wskazuje na preferencje użytkowników dla tańszych opcji edukacji online i zmieniające się potrzeby konsumentów. Wysoka początkowa popularność płatnych kursów w 2012 roku sugeruje wczesne nasycenie rynku, ale z biegiem czasu zainteresowanie spadło, prawdopodobnie z powodu rosnącej konkurencji. Natomiast kursy darmowe wydają się utrzymywać stabilny poziom zainteresowania jako nisko ryzykowna opcja nauki. <!-- Ogólny trend: Istnieje ogólny spadkowy trend w średniej liczbie subskrybentów zarówno dla kursów płatnych, jak i darmowych. To wskazuje na to, że średnia popularność kursów zmniejsza się z roku na rok.
 
 Stosunek płatnych do darmowych kursów: Kursy płatne doświadczały większego spadku w średniej liczbie subskrybentów niż kursy darmowe. To może wskazywać, że użytkownicy mogą preferować mniej kosztowne opcje edukacji online.
 
@@ -348,6 +312,7 @@ grid.arrange(p2, p1, ncol = 2)
 
 Podsumowując, analiza wykresu sugeruje kilka kluczowych trendów w dostępności i cenach kursów. Największa liczba kursów jest dostępna w najniższym przedziale cenowym (0-20), głównie na poziomie początkującym, co może świadczyć o dużej liczbie osób szukających niedrogich kursów na początek nauki. Kursy na poziomie zaawansowanym (Expert Level) są znacznie rzadsze we wszystkich przedziałach cenowych, co wskazuje na ich specjalistyczny charakter i mniejszą dostępność. W przedziałach cenowych średnich (21-160) obserwuje się równomierną dystrybucję kursów na poziomie początkującym i średnio zaawansowanym. W najwyższym przedziale cenowym (181-200) kursy dla początkujących stanowią mniejszość, co sugeruje, że rzadko są one oferowane po wysokich cenach. Ogólnie rzecz biorąc, dostępność kursów maleje wraz ze wzrostem cen, a większość kursów oferowana jest na poziomie początkującym w najniższym przedziale cenowym. Ponadto, dominacja kursów ogólnych (All Levels) wskazuje na preferencję twórców kursów do tworzenia materiałów dostosowanych do szerokiej publiczności, podczas gdy znacznie mniejsza liczba kursów dla zaawansowanych pokazuje potencjalne nisze rynkowe do rozwoju.
 
+```{=html}
 <!-- Największa liczba kursów jest dostępna w najniższym przedziale cenowym (0-20), co sugeruje, że kursy na poziomie początkującym są najbardziej dostępne cenowo lub że organizatorzy kursów preferują oferować kursy wstępne po niższych cenach, aby przyciągnąć więcej uczestników.
 
 W przedziale cenowym 0-20, największą część stanowią kursy na poziomie początkującym, co może wskazywać na to, że istnieje duża liczba osób rozpoczynających naukę, które szukają tańszych kursów, aby zacząć.
@@ -369,6 +334,7 @@ Kursy dla Początkujących: Kursy przeznaczone dla początkujących (Beginner Le
 Niewielka Liczba Kursów dla Zaawansowanych: Znacznie mniejsza liczba kursów jest przeznaczona dla uczniów na poziomie średnio zaawansowanym (Intermediate Level) i zaawansowanym (Expert Level). To może sugerować, że jest mniejszy popyt na specjalistyczne kursy lub że twórcy kursów mogą nie skupiać się na tworzeniu zaawansowanych materiałów edukacyjnych, być może z powodu większego wyzwania w tworzeniu treści na wyższym poziomie zaawansowania lub mniejszej grupy docelowej zdolnej do ich zrozumienia.
 
 Podsumowując, wykres wskazuje na koncentrację oferty edukacyjnej na kursy ogólne i dla początkujących, przy ograniczonej ofercie dla uczących się na wyższych poziomach zaawansowania, co może wskazywać na potencjalne nisze rynkowe do rozwoju. -->
+```
 ```{r}
 df %>%
   group_by(subject) %>%
@@ -387,12 +353,12 @@ Wysoka liczba kursów w kategoriach "Finanse Biznesowe" i "Rozwój Stron Interne
 ```{r}
 data_subscribers <- df %>% 
   filter(num_subscribers < 10000) %>% 
-  select(num_subscribers) %>% 
+  dplyr::select(num_subscribers) %>% 
   mutate(category = "Subscribers")
 
 data_reviews <- df %>% 
   filter(num_reviews < 1000) %>% 
-  select(num_reviews) %>% 
+  dplyr::select(num_reviews) %>% 
   mutate(category = "Reviews")
 
 # Połączenie danych
@@ -409,8 +375,8 @@ ggplot(combined_data, aes(x = value, fill = category)) +
   labs(title = "Histogramy liczby subskrybentów i recenzji", x = "Liczba", y = "Liczba kursów") +
   theme_minimal()
 ```
-Analiza histogramów recenzji i subskrybentów wskazuje na silnie skośny rozkład w obu przypadkach, z dominacją kursów o niewielkiej liczbie recenzji oraz subskrybentów. Większość kursów ma mniej niż 250 recenzji i mniej niż 2500 subskrybentów, co może świadczyć o ich nowości lub ograniczonej popularności. Wysoka skośność w obu dystrybucjach wskazuje na obecność niewielkiej liczby kursów o wyjątkowo wysokiej liczbie recenzji i subskrybentów, co sugeruje zdominowanie rynku przez kilka bardzo popularnych kursów. Te dane mogą dostarczyć cennych wskazówek twórcom kursów na temat obecnego stanu rynku i możliwości rozwoju ich oferty.
-<!-- Rozkład Recenzji: Histogram recenzji (pomarańczowy) pokazuje, że większość kursów ma niewielką liczbę recenzji, z silnie skośnym rozkładem w kierunku mniejszej liczby recenzji. Istnieje duże skupisko kursów z mniej niż 250 recenzjami, co może wskazywać na to, że wiele kursów jest stosunkowo nowych lub mniej popularnych.
+
+Analiza histogramów recenzji i subskrybentów wskazuje na silnie skośny rozkład w obu przypadkach, z dominacją kursów o niewielkiej liczbie recenzji oraz subskrybentów. Większość kursów ma mniej niż 250 recenzji i mniej niż 2500 subskrybentów, co może świadczyć o ich nowości lub ograniczonej popularności. Wysoka skośność w obu dystrybucjach wskazuje na obecność niewielkiej liczby kursów o wyjątkowo wysokiej liczbie recenzji i subskrybentów, co sugeruje zdominowanie rynku przez kilka bardzo popularnych kursów. Te dane mogą dostarczyć cennych wskazówek twórcom kursów na temat obecnego stanu rynku i możliwości rozwoju ich oferty. <!-- Rozkład Recenzji: Histogram recenzji (pomarańczowy) pokazuje, że większość kursów ma niewielką liczbę recenzji, z silnie skośnym rozkładem w kierunku mniejszej liczby recenzji. Istnieje duże skupisko kursów z mniej niż 250 recenzjami, co może wskazywać na to, że wiele kursów jest stosunkowo nowych lub mniej popularnych.
 
 Rozkład Subskrybentów: Histogram subskrybentów (zielony) również pokazuje skośny rozkład, ale z nieco innym profilem niż histogram recenzji. Większość kursów ma mniej niż 2500 subskrybentów, z największym skupiskiem w okolicy poniżej 1000. To może sugerować, że kursy te są albo nowe, albo mają wąską grupę docelową.
 
@@ -420,45 +386,45 @@ Podsumowując, wykresy te mogą wskazywać na rynek zdominowany przez kilka bard
 
 ### Macierz korelacji
 
+```{=html}
 <!-- Najpierw przeprowadzę kodowanie danych, aby umożliwić ich analizę.
 
 Kodowanie danych jakościowych (nazywane też kategoryzacją lub enkodowaniem) to proces przekształcania danych niemierzalnych ilościowo, takich jak tekst lub etykiety, w formę liczbową, którą można wykorzystać w analizie statystycznej i modelowaniu matematycznym.
 
 W praktyce dane jakościowe, takie jak płeć (mężczyzna, kobieta), kolor (czerwony, zielony, niebieski) czy poziom edukacji (podstawowy, średni, wyższy), są transformowane do postaci liczbowej, aby umożliwić przeprowadzenie takich analiz jak regresja, klasyfikacja, czy analiza korelacji. -->
-
+```
 ```{r}
-dane_zakodowane = df %>% 
-  select(is_paid:price_range, -c(published_timestamp, price_range)) %>% 
-  mutate_if(is.factor, as.numeric)
+#dane_zakodowane = df %>% 
+#  dplyr::select(is_paid:price_range, -c(published_timestamp, price_range)) %>% 
+#  mutate_if(is.factor, as.numeric)
 
-macierz_korelacji <- cor(dane_zakodowane, use = "complete.obs")
-dane_do_wykresu = melt(macierz_korelacji)  
+#macierz_korelacji <- cor(dane_zakodowane, use = "complete.obs")
+#dane_do_wykresu = melt(macierz_korelacji)  
 # Przed melt(): Macierz korelacji jest kwadratowa, z nazwami zmiennych zarówno w kolumnach, jak i wierszach. Wartości w komórkach macierzy reprezentują współczynniki korelacji między zmiennymi.
 
 #Po melt(): Wynikowym formatem jest data frame, w którym każdy rząd reprezentuje parę zmiennych (jedna zmienna w kolumnie Var1, druga w Var2) wraz z odpowiadającą im wartością korelacji (w kolumnie value).
 
 #Przykładowo, jeśli masz macierz korelacji z trzema zmiennymi A, B, C, to po zastosowaniu melt otrzymasz data frame z kolumnami Var1, Var2 i value, gdzie każdy rząd reprezentuje parę zmiennych (np. A-B, A-C, B-C) i ich korelację.
 # Dostosowanie nazw zmiennych
-dane_do_wykresu$Var1 <- factor(dane_do_wykresu$Var1, labels = names(dane_zakodowane))
-dane_do_wykresu$Var2 <- factor(dane_do_wykresu$Var2, labels = names(dane_zakodowane))
+#dane_do_wykresu$Var1 <- factor(dane_do_wykresu$Var1, labels = names(dane_zakodowane))
+#dane_do_wykresu$Var2 <- factor(dane_do_wykresu$Var2, labels = names(dane_zakodowane))
 
 # Tworzenie wykresu z wartościami korelacji
-ggplot(dane_do_wykresu, aes(x = Var1, y = Var2, fill = value)) +
-  geom_tile(color = "white") +
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                       midpoint = 0, limit = c(-1, 1), space = "Lab", 
-                       name="Korelacja") +
-  geom_text(aes(label = sprintf("%.2f", value)), color = "black", size = 3) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 8),
-        axis.text.y = element_text(size = 8),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank()) +
-  coord_fixed()
+#ggplot(dane_do_wykresu, aes(x = Var1, y = Var2, fill = value)) +
+#  geom_tile(color = "white") +
+#  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+#                       midpoint = 0, limit = c(-1, 1), space = "Lab", 
+#                       name="Korelacja") +
+#  geom_text(aes(label = sprintf("%.2f", value)), color = "black", size = 3) +
+#  theme_minimal() +
+#  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 8),
+#        axis.text.y = element_text(size = 8),
+#        axis.title.x = element_blank(),
+#        axis.title.y = element_blank()) +
+#  coord_fixed()
 ```
 
-Analiza wykazała słabą negatywną korelację między płatnością kursu a liczbą subskrybentów, co sugeruje, że kursy darmowe mają tendencję do przyciągania większej liczby uczniów. Nie stwierdzono silnej korelacji między długością kursu a jego poziomem trudności. Istnieje natomiast silna korelacja między liczbą recenzji a liczbą subskrybentów, co wskazuje, że popularniejsze kursy otrzymują więcej recenzji. Znaczna korelacja została również zauważona między liczbą wykładów a czasem trwania treści kursu. Poziom trudności kursu nie wykazuje silnej korelacji z innymi zmiennymi, co może wskazywać, że jest ustalany niezależnie od innych aspektów kursu. Ogólnie, wyniki sugerują, że niektóre cechy kursów są ściśle powiązane, podczas gdy inne, takie jak poziom trudności, nie mają znaczącego wpływu na mierzone atrybuty.
-<!-- 1.  **Zależność Czy płatny a Liczba Subskrybentów**: Istnieje słaba negatywna korelacja między tym czy kurs jest płatny, a liczbą subskrybentów (-0.27). Może to oznaczać, że te kursy za które trzeba płacić mają tendencję do posiadania mniejszej liczby subskrybentów w porównaniu z kursami bezpłatnymi.
+Analiza wykazała słabą negatywną korelację między płatnością kursu a liczbą subskrybentów, co sugeruje, że kursy darmowe mają tendencję do przyciągania większej liczby uczniów. Nie stwierdzono silnej korelacji między długością kursu a jego poziomem trudności. Istnieje natomiast silna korelacja między liczbą recenzji a liczbą subskrybentów, co wskazuje, że popularniejsze kursy otrzymują więcej recenzji. Znaczna korelacja została również zauważona między liczbą wykładów a czasem trwania treści kursu. Poziom trudności kursu nie wykazuje silnej korelacji z innymi zmiennymi, co może wskazywać, że jest ustalany niezależnie od innych aspektów kursu. Ogólnie, wyniki sugerują, że niektóre cechy kursów są ściśle powiązane, podczas gdy inne, takie jak poziom trudności, nie mają znaczącego wpływu na mierzone atrybuty. <!-- 1.  **Zależność Czy płatny a Liczba Subskrybentów**: Istnieje słaba negatywna korelacja między tym czy kurs jest płatny, a liczbą subskrybentów (-0.27). Może to oznaczać, że te kursy za które trzeba płacić mają tendencję do posiadania mniejszej liczby subskrybentów w porównaniu z kursami bezpłatnymi.
 
 2.  **Brak Silnej Korelacji Między długością kursu a jego Poziomem**: Korelacja między **`level`** a **`content_duration`** jest bliska zeru (-0.06), co sugeruje brak związku między poziomem trudności kursu a jego długością.
 
@@ -517,58 +483,67 @@ base::sapply(list(price=df$price,num_subscribers=df$num_subscribers,
 
 ```
 
+Analiza miar asymetrii wykazała, że wszystkie zmienne mają rozkład asymetryczny o asymetrii prawostronnej.
+
+Analiza miar koncentracji wykazała że rozkład cen jest mezokurtyczny, natomiast rozkład pozostałych zmiennych jest leptokurtyczny.
+
+Zatem na podstawie powyższych wyników możemy przypuszczać, że żadna ze zmiennych nie posiada rozkładu normalnego.
+
+To jeszcze lepiej rozpiszę.
+
 ## Modelowanie danych
+
+### Regresja liniowa
+
+Zanim przystąpimy do zbudowania modelu liniowego należy wybrać dane do analizy. Od razu narzucają się dwa problemy. Zmienne `price` oraz `is_paid` niosą ze sobą tą samą informację odnośnie ceny danego kursu. Można zauważyć, że `is_paid` jest zawarte w `price`, zatem do potencjalnego modelu wybierzemy zmienną `price`. Zmienne `contetn_duration` oraz `num_lectures` są ze sobą mocno skorelowane, zatem nie powinny być ze sobą w jednym modelu. Ciężko jest jednak stwierdzić, którą z nich należy umieścić. By temu zaradzić, a zarazem sprawdzić pozostałe zmienne skorzystamy z pomocy regresji krokowej
 
 ```{r}
 model_pusty <- lm(num_subscribers~-1,data = df)
-model_pelny <- lm(num_subscribers~price+num_reviews+num_lectures+content_duration + as.factor(level)+as.factor(subject)+as.factor(year),data=df)
+model_pelny <- lm(num_subscribers~num_reviews+num_lectures+content_duration + as.factor(level)+as.factor(subject)+as.factor(year),data=df)
 ```
 
 Selekcja w przód
 
-```{r}
+```{r include=FALSE}
 model1 <- step(model_pusty,scope = formula(model_pelny),direction = 'forward')
+```
+
+```{r}
+model1$call
 ```
 
 Eliminacja wsteczna
 
-```{r}
+```{r include=FALSE}
 model2 <- step(model_pelny,scope = formula(model_pelny),direction = 'backward')
 ```
 
 ```{r}
-anova(model1,model2)
+model2$call
 ```
 
-Na podstawie częściowego testu F dochodzimy do wniosku, że bardziej złożony model jest lepszy od prostszego modelu. Zatem dalszej analizie podamy model2.
+Korzystając z dwóch kierunków regresji krokowej otrzymaliśmy modele różniące się tylko zwartością wyrazu wolnego. Przez funkcję odrzucone zostały zmienne `content_duration` oraz `price`.
 
-## Obserwacje nietypowe
+#### Obserwacje nietypowe
+
+Pozbędziemy się teraz obserwacji nietypowych.
 
 ```{r}
 plot(model2,which = 4:5)
 cooks.distance(model2)[which(cooks.distance(model2)>0.5)]
 ```
 
-Na podstawie wyżej ukazanych wykresów możemy stwierdzić, że w modelu znajdują się obserwacje nietypowe. Są to obserwacje numer 3225,3199,2822 oraz 2696
+Na podstawie wyżej ukazanych wykresów oraz wartości odległości cook'a możemy stwierdzić, że w modelu znajdują się obserwacje nietypowe. Są to obserwacje numer 3225,3199,2822 oraz 2696. Usuniemy je teraz ze zbioru danych.
 
 ```{r}
 data_new <- df[-3225,][-3199,][-2882,][-2696,]
+model <- lm(formula = num_subscribers ~ num_reviews + num_lectures + as.factor(level) + 
+    as.factor(subject) + as.factor(year), data = data_new)
+summary(model)
+AIC(model)
 ```
 
-```{r}
-model2 <- lm(num_subscribers ~ num_reviews + num_lectures + as.factor(level) + 
-    as.factor(subject) + as.factor(year),data=data_new)
-```
-
-```{r}
-summary(model2)
-```
-
-```{r}
-plot(model2)
-```
-
-## Podstawowe założenia
+#### Podstawowe założenia
 
 Liniowość
 
@@ -587,12 +562,6 @@ Autokorelacja
 
 ```{r}
 dwtest(model2)
-```
-
-Egzogeniczność
-
-```{r}
-
 ```
 
 Normalność reszt
@@ -685,3 +654,19 @@ varImpPlot(model) # wyższa wartość wskazuje wyższą ważność zmiennej w mo
 ```
 
 Po usunięciu level z modelu zwiększyło się Rsquared, co oznacza, że model wyjaśnia więcej zmienności zmiennej objaśnianej
+
+```{r}
+df
+```
+
+### Log
+
+```{r}
+a <- glm(as.factor(is_paid)~num_reviews+num_lectures+as.factor(level)+as.factor(subject)+as.factor(year),family = binomial(link='logit'),data=data_train)
+```
+
+```{r}
+table(predict(a,data_test,interval = 'predict') > 50)
+```
+
+Model logitowy chyba nie będzie dobry - jeszcze popatrze
