@@ -176,8 +176,8 @@ Transformacja danych
 df$level <- factor(df$level, levels = names(sort(table(df$level), decreasing = TRUE)))  # zamiana chr na posortowany factor
 df$is_paid = factor(df$is_paid)  # zamiana chr na factor
 df$subject = factor(df$subject)
-#df$published_timestamp = substr(df$published_timestamp, 1, 10) # skrócenie daty do miesiąca i roku
-df$published_timestamp =ymd_hms(df$published_timestamp)  # zamiana daty
+df$published_timestamp = substr(df$published_timestamp, 1, 10) # skrócenie daty do miesiąca i roku
+df$published_timestamp =ymd(df$published_timestamp)  # zamiana daty
 df$year <- as.factor(year(df$published_timestamp))
 ```
 
@@ -394,34 +394,34 @@ Kodowanie danych jakościowych (nazywane też kategoryzacją lub enkodowaniem) t
 W praktyce dane jakościowe, takie jak płeć (mężczyzna, kobieta), kolor (czerwony, zielony, niebieski) czy poziom edukacji (podstawowy, średni, wyższy), są transformowane do postaci liczbowej, aby umożliwić przeprowadzenie takich analiz jak regresja, klasyfikacja, czy analiza korelacji. -->
 ```
 ```{r}
-#dane_zakodowane = df %>% 
-#  dplyr::select(is_paid:price_range, -c(published_timestamp, price_range)) %>% 
-#  mutate_if(is.factor, as.numeric)
+dane_zakodowane = df %>% 
+  dplyr::select(is_paid:price_range, -c(published_timestamp, price_range)) %>% 
+  mutate_if(is.factor, as.numeric)
 
-#macierz_korelacji <- cor(dane_zakodowane, use = "complete.obs")
-#dane_do_wykresu = melt(macierz_korelacji)  
+macierz_korelacji <- cor(dane_zakodowane, use = "complete.obs")
+dane_do_wykresu = melt(macierz_korelacji)  
 # Przed melt(): Macierz korelacji jest kwadratowa, z nazwami zmiennych zarówno w kolumnach, jak i wierszach. Wartości w komórkach macierzy reprezentują współczynniki korelacji między zmiennymi.
 
 #Po melt(): Wynikowym formatem jest data frame, w którym każdy rząd reprezentuje parę zmiennych (jedna zmienna w kolumnie Var1, druga w Var2) wraz z odpowiadającą im wartością korelacji (w kolumnie value).
 
 #Przykładowo, jeśli masz macierz korelacji z trzema zmiennymi A, B, C, to po zastosowaniu melt otrzymasz data frame z kolumnami Var1, Var2 i value, gdzie każdy rząd reprezentuje parę zmiennych (np. A-B, A-C, B-C) i ich korelację.
 # Dostosowanie nazw zmiennych
-#dane_do_wykresu$Var1 <- factor(dane_do_wykresu$Var1, labels = names(dane_zakodowane))
-#dane_do_wykresu$Var2 <- factor(dane_do_wykresu$Var2, labels = names(dane_zakodowane))
+dane_do_wykresu$Var1 <- factor(dane_do_wykresu$Var1, labels = names(dane_zakodowane))
+dane_do_wykresu$Var2 <- factor(dane_do_wykresu$Var2, labels = names(dane_zakodowane))
 
 # Tworzenie wykresu z wartościami korelacji
-#ggplot(dane_do_wykresu, aes(x = Var1, y = Var2, fill = value)) +
-#  geom_tile(color = "white") +
-#  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-#                       midpoint = 0, limit = c(-1, 1), space = "Lab", 
-#                       name="Korelacja") +
-#  geom_text(aes(label = sprintf("%.2f", value)), color = "black", size = 3) +
-#  theme_minimal() +
-#  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 8),
-#        axis.text.y = element_text(size = 8),
-#        axis.title.x = element_blank(),
-#        axis.title.y = element_blank()) +
-#  coord_fixed()
+ggplot(dane_do_wykresu, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1, 1), space = "Lab", 
+                      name="Korelacja") +
+  geom_text(aes(label = sprintf("%.2f", value)), color = "black", size = 3) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 8),
+        axis.text.y = element_text(size = 8),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()) +
+  coord_fixed()
 ```
 
 Analiza wykazała słabą negatywną korelację między płatnością kursu a liczbą subskrybentów, co sugeruje, że kursy darmowe mają tendencję do przyciągania większej liczby uczniów. Nie stwierdzono silnej korelacji między długością kursu a jego poziomem trudności. Istnieje natomiast silna korelacja między liczbą recenzji a liczbą subskrybentów, co wskazuje, że popularniejsze kursy otrzymują więcej recenzji. Znaczna korelacja została również zauważona między liczbą wykładów a czasem trwania treści kursu. Poziom trudności kursu nie wykazuje silnej korelacji z innymi zmiennymi, co może wskazywać, że jest ustalany niezależnie od innych aspektów kursu. Ogólnie, wyniki sugerują, że niektóre cechy kursów są ściśle powiązane, podczas gdy inne, takie jak poziom trudności, nie mają znaczącego wpływu na mierzone atrybuty. <!-- 1.  **Zależność Czy płatny a Liczba Subskrybentów**: Istnieje słaba negatywna korelacja między tym czy kurs jest płatny, a liczbą subskrybentów (-0.27). Może to oznaczać, że te kursy za które trzeba płacić mają tendencję do posiadania mniejszej liczby subskrybentów w porównaniu z kursami bezpłatnymi.
@@ -627,20 +627,71 @@ bptest(mod)
 dwtest(mod)
 ```
 
+### Drzewo decyzyjne
+
+Do modelu drzewa dezycyjnego wybieram zmienne**`is_paid`**, **`price`**, **`num_reviews`**, **`num_lectures`**, **`level`**, **`content_duration`**, przekształcone cechy z **`published_timestamp`** oraz **`subject`**.
+
+**Zmienne niezależne (features):** Oto analiza poszczególnych zmiennych w Twojej bazie danych:
+
+-   **`course_title`**: To jest tekstowy opis kursu. Chociaż może zawierać użyteczne informacje, analiza tekstu wymaga zaawansowanych technik przetwarzania języka naturalnego i zazwyczaj nie jest bezpośrednio używana w prostych modelach drzew decyzyjnych.
+
+-   **`is_paid`**: To binarna zmienna wskazująca, czy kurs jest płatny. Jest to ważny czynnik, który może wpływać na liczbę subskrybentów.
+
+-   **`price`**: Cena kursu jest istotnym czynnikiem, który może wpływać na decyzję o subskrypcji. Jest to zmienna ciągła i powinna być włączona do modelu.
+
+-   **`num_reviews`**: Liczba recenzji może być wskaźnikiem popularności kursu, co może wpływać na liczbę subskrybentów.
+
+-   **`num_lectures`**: Ilość materiału kursu, którą można uznać za wskaźnik wartości kursu.
+
+-   **`level`**: Poziom trudności kursu (np. początkujący, średnio zaawansowany, zaawansowany) jest kategoryczną zmienną, która może wpływać na zainteresowanie kursami wśród różnych grup subskrybentów.
+
+-   **`content_duration`**: Czas trwania kursu, który może wpływać na zainteresowanie potencjalnych subskrybentów.
+
+-   **`published_timestamp`**: Data publikacji kursu, która może być przekształcona na cechy czasowe (np. rok, miesiąc), co pozwoli na zbadanie trendów czasowych w zapisach na kursy.
+
+-   **`subject`**: Tematyka kursu jest ważnym czynnikiem, który może wpływać na liczbę subskrybentów.
+
+-   **Przekształcenia i selekcja cech:**
+
+    -   Tekstowe i kategoryczne zmienne, takie jak **`level`** i **`subject`**, powinny zostać zakodowane na wartości liczbowe, na przykład za pomocą kodowania etykiet.
+
+    -   Zmienna **`published_timestamp`** powinna zostać przekształcona na format daty, a następnie być może na cechy numeryczne (rok, miesiąc, dzień).
+
+```{r}
+set.seed(123)
+library(rpart)
+library(rpart.plot)
+data_tree = df[,c(3,4,5,6,8,9, 7, 10)]
+#data_tree = cbind(data_tree, dane_zakodowane[,c(6,8)])
+split = createDataPartition(data_tree$num_subscribers, p = .8, list = F, times = 1)  # podział danych 
+data_train = data_tree[split,]
+data_test = data_tree[-split,]
+
+fit <- rpart(num_subscribers ~ ., data = data_train, method = "anova", cp = 0.0001, maxdepth = 5, minbucket = 5)  # dla regresji, bo num_subsrtibers jest zmienną ilościową, cp - im mniej tym bardziej skomplikowane drzewo
+
+prp(fit)
+
+# prognozowanie danych testowych
+pred = predict(fit, data_test)
+result = postResample(pred = pred, obs = data_test$num_subscribers)
+result
+```
+
 ### Las losowy
 
 ```{r}
 library(randomForest)
 set.seed(42)  # używamy seed dla powtarzalności wyników
+las = df[,c(3,4,5,6,8,9, 7, 10)]
 
 # używamy tej komendy, gdy mamy jakieś braki danych, las losowy uzupełnia te braki, co jest pomocne w późniejszej analizie
 # rfImpute(num_subscribers ~ ., df = df, iter = 6)  # przewidujemy liczbę subskrybentów, budujemy 6 lasów losowych
 # u nas nie ma braków danych, więc jej nie używamy
 
 # dzielenie danych na zbiór treningowy i testowy
-split = createDataPartition(df$num_subscribers, p = .8, list = F, times = 1)  # podział danych 
-data_train = df[split,]
-data_test = df[-split,]
+split = createDataPartition(las$num_subscribers, p = .8, list = F, times = 1)  # podział danych 
+data_train = las[split,]
+data_test = las[-split,]
 
 model = randomForest(num_subscribers ~ .-level, data = data_train, proximity=  T)
 
@@ -654,10 +705,6 @@ varImpPlot(model) # wyższa wartość wskazuje wyższą ważność zmiennej w mo
 ```
 
 Po usunięciu level z modelu zwiększyło się Rsquared, co oznacza, że model wyjaśnia więcej zmienności zmiennej objaśnianej
-
-```{r}
-df
-```
 
 ### Log
 
