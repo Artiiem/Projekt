@@ -7,6 +7,10 @@ format:
     message: false
     echo: false
     self-contained: true
+    toc: true
+    toc_float:
+      toc_positon: "right"
+      smooth_scroll: true
 editor: visual
 editor_options: 
   chunk_output_type: inline
@@ -57,7 +61,11 @@ library(interactions)
 library(plotly)
 ```
 
-## Wczytanie danych
+## Przedstawienie danych
+
+Zbiór danych przedstawia szeroki zakres informacji dotyczących kursów oferowanych przez platformę e-learningową Udemy. Zawiera on dane takie jak tytuł kursu, jego cenę, liczbę subskrybentów, poziom trudności, datę i godzinę publikacji, jak również główną tematykę każdego kursu. Dzięki temu zapewnia kompleksowy przegląd oferty edukacyjnej dostępnej na Udemy, umożliwiając analizę zarówno poszczególnych kursów, jak i ogólnych trendów w zakresie edukacji online.
+
+Udemy to masowa platforma kursów online (MOOC), która oferuje zarówno darmowe, jak i płatne kursy. Każdy może stworzyć kurs, co jest modelem biznesowym, który pozwolił Udemy na posiadanie setek tysięcy kursów.
 
 ```{r}
 data <- read.csv("udemy_courses.csv")
@@ -67,11 +75,10 @@ data <- data[,-3]
 data <- data[,-1]
 ```
 
-W naszym projekcie skupimy się na analizie bazy danych "Udemy courses".
-
 Oto pierwsze pięć wierszy z tabeli.
 
 ```{r}
+data = data %>% arrange(desc(num_subscribers))
 gt(head(data,5)) %>% 
     cols_width(course_title ~ px(190),
                num_subscribers ~ px(180),
@@ -95,7 +102,7 @@ gt(head(data,5)) %>%
       weight = 'bold',
       style = 'italic'
     ),
-    locations = cells_body(columns = course_title)
+    locations = cells_body(columns = num_subscribers)
   ) %>% 
   tab_style(
     style = cell_text(
@@ -171,8 +178,6 @@ liczba
 ```{r}
 df <- data %>% distinct()
 ```
-
-Transformacja danych
 
 ```{r}
 df$level <- factor(df$level, levels = names(sort(table(df$level), decreasing = TRUE)))  # zamiana chr na posortowany factor
@@ -295,7 +300,8 @@ p1 <- ggplot(df, aes(x = level, fill = level)) +
   labs(title = "Rozkład poziomu kursów", x = "Poziom", y = "Liczba kursów") +
   theme_minimal() +
   theme(legend.position = "none") +
-  scale_fill_manual(values = colors)
+  scale_fill_manual(values = colors) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 df$price_range <- cut(df$price, 
                       breaks = seq(0, 200, by = 20),
@@ -307,7 +313,8 @@ p2 <- ggplot(df, aes(x = price_range, fill = level)) +
   geom_bar() +
   labs(title = "Rozkład cen kursów", x = "Przedział cenowy", y = "Liczba kursów") +
   theme_minimal() +
-  scale_fill_manual(values = colors)
+  scale_fill_manual(values = colors) +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
 
 grid.arrange(p2, p1, ncol = 2) 
 ```
@@ -639,36 +646,12 @@ dwtest(mod)
 
 ### Drzewo decyzyjne
 
-Do modelu drzewa dezycyjnego wybieram zmienne**`is_paid`**, **`price`**, **`num_reviews`**, **`num_lectures`**, **`level`**, **`content_duration`**, przekształcone cechy z **`published_timestamp`** oraz **`subject`**.
+Drzewo decyzyjne to narzędzie stosowane w uczeniu maszynowym do modelowania przewidywań i decyzji. Składa się z węzłów reprezentujących pytania lub decyzje, oraz z gałęzi, które prowadzą do odpowiedzi lub kolejnych pytań. Proces ten kończy się na liściach drzewa, które przedstawiają ostateczne przewidywania lub decyzje. Drzewa decyzyjne są używane do klasyfikacji lub regresji i charakteryzują się prostotą interpretacji.
 
-**Zmienne niezależne (features):** Oto analiza poszczególnych zmiennych w Twojej bazie danych:
-
--   **`course_title`**: To jest tekstowy opis kursu. Chociaż może zawierać użyteczne informacje, analiza tekstu wymaga zaawansowanych technik przetwarzania języka naturalnego i zazwyczaj nie jest bezpośrednio używana w prostych modelach drzew decyzyjnych.
-
--   **`is_paid`**: To binarna zmienna wskazująca, czy kurs jest płatny. Jest to ważny czynnik, który może wpływać na liczbę subskrybentów.
-
--   **`price`**: Cena kursu jest istotnym czynnikiem, który może wpływać na decyzję o subskrypcji. Jest to zmienna ciągła i powinna być włączona do modelu.
-
--   **`num_reviews`**: Liczba recenzji może być wskaźnikiem popularności kursu, co może wpływać na liczbę subskrybentów.
-
--   **`num_lectures`**: Ilość materiału kursu, którą można uznać za wskaźnik wartości kursu.
-
--   **`level`**: Poziom trudności kursu (np. początkujący, średnio zaawansowany, zaawansowany) jest kategoryczną zmienną, która może wpływać na zainteresowanie kursami wśród różnych grup subskrybentów.
-
--   **`content_duration`**: Czas trwania kursu, który może wpływać na zainteresowanie potencjalnych subskrybentów.
-
--   **`published_timestamp`**: Data publikacji kursu, która może być przekształcona na cechy czasowe (np. rok, miesiąc), co pozwoli na zbadanie trendów czasowych w zapisach na kursy.
-
--   **`subject`**: Tematyka kursu jest ważnym czynnikiem, który może wpływać na liczbę subskrybentów.
-
--   **Przekształcenia i selekcja cech:**
-
-    -   Tekstowe i kategoryczne zmienne, takie jak **`level`** i **`subject`**, powinny zostać zakodowane na wartości liczbowe, na przykład za pomocą kodowania etykiet.
-
-    -   Zmienna **`published_timestamp`** powinna zostać przekształcona na format daty, a następnie być może na cechy numeryczne (rok, miesiąc, dzień).
+Do modelu drzewa dezycyjnego wybieram zmienne **`price`**, **`num_reviews`**, **`num_lectures`**, **`level`**, **`content_duration`**, **`published_timestamp`** oraz **`subject`**.
 
 ```{r}
-set.seed(123)
+set.seed(2024)
 library(rpart)
 library(rpart.plot)
 data_tree = df[,c(3,4,5,6,8,9, 7, 10)]
@@ -677,9 +660,13 @@ split = createDataPartition(data_tree$num_subscribers, p = .8, list = F, times =
 data_train = data_tree[split,]
 data_test = data_tree[-split,]
 
-fit <- rpart(num_subscribers ~ ., data = data_train, method = "anova", cp = 0.0001, maxdepth = 5, minbucket = 5)  # dla regresji, bo num_subsrtibers jest zmienną ilościową, cp - im mniej tym bardziej skomplikowane drzewo
+fit <- rpart(num_subscribers ~ ., data = data_train, method = "anova", cp = 0.0001, maxdepth = 4, minbucket =4)  # dla regresji, bo num_subsrtibers jest zmienną ilościową, cp - im mniej tym bardziej skomplikowane drzewo
 
-prp(fit)
+prp(fit, 
+    type = 0, 
+    under = TRUE, 
+    cex = 0.6, 
+    main = "Drzewo Decyzyjne")
 
 # prognozowanie danych testowych
 pred = predict(fit, data_test)
@@ -689,9 +676,26 @@ result
 
 ### Las losowy
 
+Las losowy, znany również jako Random Forest, to zaawansowana metoda uczenia maszynowego oparta na agregacji wielu drzew decyzyjnych do generowania bardziej precyzyjnych i stabilnych prognoz. Jest to przykład tzw. techniki "ensemble learning", gdzie wielokrotne modele (w tym przypadku drzewa decyzyjne) są łączone w celu uzyskania lepszych wyników niż każdy z modeli oddzielnie.
+
+```{=html}
+<!-- Kluczowe aspekty lasu losowego:
+
+1.  **Tworzenie wielu drzew decyzyjnych**: Las losowy składa się z dużej liczby drzew decyzyjnych. Każde drzewo jest trenowane na nieco innej próbce danych, często wybieranej metodą bootstrap (losowy wybór z powtórzeniami).
+
+2.  **Różnorodność**: Każde drzewo w lesie losowym jest budowane z wykorzystaniem losowego podzbioru cech, co zwiększa różnorodność w modelu i pomaga w redukcji nadmiernego dopasowania (ang. overfitting).
+
+3.  **Agregacja prognoz**: Prognozy z poszczególnych drzew są agregowane, najczęściej poprzez głosowanie dla klasyfikacji lub uśrednianie dla regresji, w celu uzyskania końcowego wyniku.
+
+4.  **Wysoka dokładność i stabilność**: Dzięki agregacji wyników z wielu modeli, lasy losowe często osiągają wysoką dokładność i są odporne na nadmierne dopasowanie, co czyni je skutecznymi w szerokim zakresie zastosowań.
+
+5.  **Uniwersalność**: Lasy losowe mogą być stosowane zarówno do problemów klasyfikacji, jak i regresji, a także do innych zadań, takich jak klasyfikacja wieloklasowa, detekcja anomalii i inne.
+
+Las losowy jest ceniony w praktycznych zastosowaniach za swoją wydajność i dobrą generalizację, co sprawia, że jest popularnym wyborem w wielu problemach uczenia maszynowego. -->
+```
 ```{r}
 library(randomForest)
-set.seed(42)  # używamy seed dla powtarzalności wyników
+set.seed(2024)  # używamy seed dla powtarzalności wyników
 las = df[,c(3,4,5,6,8,9, 7, 10)]
 
 # używamy tej komendy, gdy mamy jakieś braki danych, las losowy uzupełnia te braki, co jest pomocne w późniejszej analizie
@@ -707,8 +711,8 @@ model = randomForest(num_subscribers ~ .-level, data = data_train, proximity=  T
 
 # ocena modelu
 predi = predict(model, data_test)
-result = postResample(pred = predi, obs = data_test$num_subscribers)
-result
+result1 = postResample(pred = predi, obs = data_test$num_subscribers)
+result1
 varImpPlot(model) # wyższa wartość wskazuje wyższą ważność zmiennej w modelu, level ma małą w porównaniu do innych więc można ją wyżucić z modelu
 
 # można jeszcze dodać wykresy błędów, ale nie wiem czy jest sens, kiedyś sprawdzę
@@ -734,4 +738,33 @@ df %>%
   labs(title = 'Wykresy pudełkowe zeskalowanej liczby subskrybcji', x= 'Przedział cenowy', y = 'Zeskalowana liczba subskrybcji')+
   theme_minimal()
 
+```
+
+### Porównanie modeli
+
+```{r}
+modele = rbind(result, result1)
+row.names(modele) = c("Drzewo decyzyjne", "Las losowy")
+modele_df <- as.data.frame(modele)
+
+# Dodanie nazw wierszy jako kolumny
+modele_df$Model <- row.names(modele_df)
+
+# Ustawienie nazw wierszy jako pierwszej kolumny
+modele_df <- modele_df[, c(ncol(modele_df), 1:(ncol(modele_df)-1))]
+
+# Tworzenie tabeli z wykorzystaniem gt
+gt(modele_df) %>%
+  tab_style(
+    style = cell_text(weight = 'bold', transform = 'uppercase'),
+    locations = cells_column_labels()
+  ) %>%
+  tab_style(
+    style = cell_text(weight = 'bold', style = 'italic'),
+    locations = cells_body(columns = 2:ncol(modele_df))
+  ) %>%
+  tab_style(
+    style = cell_borders(sides = "right", color = "gray50", weight = px(2)),
+    locations = cells_body(columns = 1)  # Dodanie granicy po prawej stronie kolumny Model
+  )
 ```
