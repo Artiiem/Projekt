@@ -53,6 +53,8 @@ library(ivreg)
 library(caret)
 library(reshape2)
 library(rstatix)
+library(interactions)
+library(plotly)
 ```
 
 ## Wczytanie danych
@@ -499,7 +501,7 @@ Zanim przystąpimy do zbudowania modelu liniowego należy wybrać dane do analiz
 
 ```{r}
 model_pusty <- lm(num_subscribers~-1,data = df)
-model_pelny <- lm(num_subscribers~num_reviews+price+num_lectures+content_duration + as.factor(level)+as.factor(subject)+as.factor(year)+as.factor(is_paid),data=df)
+model_pelny <- lm(num_subscribers~num_reviews+price+num_lectures+content_duration + level+subject+year+is_paid,data=df)
 
 ```
 
@@ -536,11 +538,24 @@ plot(model2,which = 4:5)
 cooks.distance(model2)[which(cooks.distance(model2)>0.5)]
 ```
 
-Na podstawie wyżej ukazanych wykresów oraz wartości odległości cook'a możemy stwierdzić, że w modelu znajdują się obserwacje nietypowe. Są to obserwacje numer 3225,3199,2822 oraz 2696. Usuniemy je teraz ze zbioru danych.
+Na podstawie wyżej ukazanych wykresów oraz wartości odległości cook'a możemy stwierdzić, że w modelu znajdują się obserwacje nietypowe. Są to obserwacje numer 3225,3199,2822 oraz 2696.
+
+Jednak nie zamierzamy ich usuwać
 
 ```{r}
-data_new <- df[-c(3225,3199,2882,2696),]
-model <- lm(num_subscribers ~ num_reviews + price  + subject + level + year + is_paid,data = data_new)
+model2
+model3 <- lm(num_subscribers ~ num_reviews + price  + subject + level + year + is_paid + price:subject,data = df)
+
+
+interact_plot(model3,pred=price,modx=subject)
+
+anova(model2,model3)
+
+summary(model3)
+```
+
+```{r}
+model <- lm(num_subscribers ~ num_reviews + price  + subject + level + year + is_paid + price:subject,data = df)
 summary(model)
 model$coefficients
 ```
@@ -550,42 +565,33 @@ model$coefficients
 Liniowość
 
 ```{r}
-resettest(model)
-raintest(model)
+resettest(model3)
+raintest(model3)
 ```
 
 Homoskedastyczność
 
 ```{r}
-bptest(model)
+bptest(model3)
 ```
 
 Autokorelacja
 
 ```{r}
-dwtest(model)
+dwtest(model3)
 ```
 
 Normalność reszt
 
 ```{r}
-lillie.test(model$residuals)
-shapiro.test(model$residuals)
-cvm.test(model$residuals)
-ad.test(model$residuals)
+lillie.test(model3$residuals)
+shapiro.test(model3$residuals)
+cvm.test(model3$residuals)
+ad.test(model3$residuals)
 
-plot(model,which = 4:5)
 ```
 
 Wszędzie wszystko odrzucamy.
-
-```{r}
-#nowa_wart <- data.frame(price=min(df$price),num_reviews=min(df$num_reviews),content_duration=min(df$content_duration),level=as.factor('Intermediate Level'),subject='Web Development') 
-#pred <- predict(model2,nowa_wart,interval = 'predict')
-#pred
-
-
-```
 
 ### PCA
 
@@ -710,18 +716,6 @@ varImpPlot(model) # wyższa wartość wskazuje wyższą ważność zmiennej w mo
 
 Po usunięciu level z modelu zwiększyło się Rsquared, co oznacza, że model wyjaśnia więcej zmienności zmiennej objaśnianej
 
-### Log
-
-```{r}
-a <- glm(as.factor(is_paid)~num_reviews+num_lectures+as.factor(level)+as.factor(subject)+as.factor(year),family = binomial(link='logit'),data=data_train)
-```
-
-```{r}
-table(predict(a,data_test,interval = 'predict') > 50)
-```
-
-Model logitowy chyba nie będzie dobry - jeszcze popatrze
-
 ```{r}
 df %>%  #### To dotyczy interpretacji zmiennej price w modelu, miałem małe problemy by ogarnąc o co z tym chodziło. 
   select(price_range,num_subscribers) %>% 
@@ -729,10 +723,15 @@ df %>%  #### To dotyczy interpretacji zmiennej price w modelu, miałem małe pro
   mutate(n=n()) %>% 
   group_by(price_range,n) %>% 
   summarise_at(vars(num_subscribers),
-               list(mean,median))
-library(plotly)
-a <- df %>% 
-  ggplot(aes(x=price_range,y=num_subscribers))+
-  geom_boxplot()
-ggplotly(a)
+               list(`mean`=mean,`median`=median)) %>% 
+  ungroup() %>% 
+  gt()
+  
+
+df %>% 
+  ggplot(aes(x=price_range,y=sqrt(num_subscribers)))+
+  geom_boxplot()+
+  labs(title = 'Wykresy pudełkowe zeskalowanej liczby subskrybcji', x= 'Przedział cenowy', y = 'Zeskalowana liczba subskrybcji')+
+  theme_minimal()
+
 ```
