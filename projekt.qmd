@@ -495,11 +495,12 @@ To jeszcze lepiej rozpiszę.
 
 ### Regresja liniowa
 
-Zanim przystąpimy do zbudowania modelu liniowego należy wybrać dane do analizy. Od razu narzucają się dwa problemy. Zmienne `price` oraz `is_paid` niosą ze sobą tą samą informację odnośnie ceny danego kursu. Można zauważyć, że `is_paid` jest zawarte w `price`, zatem do potencjalnego modelu wybierzemy zmienną `price`. Zmienne `contetn_duration` oraz `num_lectures` są ze sobą mocno skorelowane, zatem nie powinny być ze sobą w jednym modelu. Ciężko jest jednak stwierdzić, którą z nich należy umieścić. By temu zaradzić, a zarazem sprawdzić pozostałe zmienne skorzystamy z pomocy regresji krokowej
+Zanim przystąpimy do zbudowania modelu liniowego należy wybrać dane do analizy. W przypadku zmiennej objaśnianej jest to zmienna `num_subscribers`. Natomiast w przypadku zmiennych objaśniających narzuca się to, że `contetn_duration` oraz `num_lectures` są ze sobą mocno skorelowane, zatem nie powinny być ze sobą w jednym modelu. Ciężko jest jednak stwierdzić, którą z nich należy umieścić. By temu zaradzić, a zarazem sprawdzić pozostałe zmienne skorzystamy z pomocy regresji krokowej.
 
 ```{r}
 model_pusty <- lm(num_subscribers~-1,data = df)
-model_pelny <- lm(num_subscribers~num_reviews+num_lectures+content_duration + as.factor(level)+as.factor(subject)+as.factor(year),data=df)
+model_pelny <- lm(num_subscribers~num_reviews+price+num_lectures+content_duration + as.factor(level)+as.factor(subject)+as.factor(year)+as.factor(is_paid),data=df)
+
 ```
 
 Selekcja w przód
@@ -522,7 +523,9 @@ model2 <- step(model_pelny,scope = formula(model_pelny),direction = 'backward')
 model2$call
 ```
 
-Korzystając z dwóch kierunków regresji krokowej otrzymaliśmy modele różniące się tylko zwartością wyrazu wolnego. Przez funkcję odrzucone zostały zmienne `content_duration` oraz `price`.
+Korzystając z dwóch kierunków regresji krokowej otrzymaliśmy modele różniące się tylko zwartością wyrazu wolnego. Przez funkcję odrzucone zostały zarówno zmienne `content_duration` jak i `num_lectures`.
+
+Zatem ostatecznie model składa się ze zmiennej zależnej `num_subscribers` oraz zmiennych niezależnych: `num_reviews`, `price`, `subject`,`level`,`year` oraz `is_paid` .
 
 #### Obserwacje nietypowe
 
@@ -536,11 +539,10 @@ cooks.distance(model2)[which(cooks.distance(model2)>0.5)]
 Na podstawie wyżej ukazanych wykresów oraz wartości odległości cook'a możemy stwierdzić, że w modelu znajdują się obserwacje nietypowe. Są to obserwacje numer 3225,3199,2822 oraz 2696. Usuniemy je teraz ze zbioru danych.
 
 ```{r}
-data_new <- df[-3225,][-3199,][-2882,][-2696,]
-model <- lm(formula = num_subscribers ~ num_reviews + num_lectures + as.factor(level) + 
-    as.factor(subject) + as.factor(year), data = data_new)
+data_new <- df[-c(3225,3199,2882,2696),]
+model <- lm(num_subscribers ~ num_reviews + price  + subject + level + year + is_paid,data = data_new)
 summary(model)
-AIC(model)
+model$coefficients
 ```
 
 #### Podstawowe założenia
@@ -548,29 +550,31 @@ AIC(model)
 Liniowość
 
 ```{r}
-resettest(model2)
-raintest(model2)
+resettest(model)
+raintest(model)
 ```
 
 Homoskedastyczność
 
 ```{r}
-bptest(model2)
+bptest(model)
 ```
 
 Autokorelacja
 
 ```{r}
-dwtest(model2)
+dwtest(model)
 ```
 
 Normalność reszt
 
 ```{r}
-lillie.test(model2$residuals)
-shapiro.test(model2$residuals)
-cvm.test(model2$residuals)
-ad.test(model2$residuals)
+lillie.test(model$residuals)
+shapiro.test(model$residuals)
+cvm.test(model$residuals)
+ad.test(model$residuals)
+
+plot(model,which = 4:5)
 ```
 
 Wszędzie wszystko odrzucamy.
@@ -717,3 +721,18 @@ table(predict(a,data_test,interval = 'predict') > 50)
 ```
 
 Model logitowy chyba nie będzie dobry - jeszcze popatrze
+
+```{r}
+df %>%  #### To dotyczy interpretacji zmiennej price w modelu, miałem małe problemy by ogarnąc o co z tym chodziło. 
+  select(price_range,num_subscribers) %>% 
+  group_by(price_range) %>% 
+  mutate(n=n()) %>% 
+  group_by(price_range,n) %>% 
+  summarise_at(vars(num_subscribers),
+               list(mean,median))
+library(plotly)
+a <- df %>% 
+  ggplot(aes(x=price_range,y=num_subscribers))+
+  geom_boxplot()
+ggplotly(a)
+```
