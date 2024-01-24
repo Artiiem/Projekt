@@ -1,5 +1,5 @@
 ---
-title: "projekt"
+title: "Projekt analizy danych z Udemy"
 author: "Artur Kidaj, Kamil Kopiński"
 format:
   html:
@@ -16,7 +16,8 @@ editor_options:
   chunk_output_type: inline
 ---
 
-D zrobienia w projekcie:
+```{=html}
+<!--zrobienia w projekcie:
 
 Treść:
 
@@ -42,8 +43,8 @@ Wizualia:
 
 \- stworzyć jednorodny styl tabeli (rozkład,styl tekstu i obramowań,kolory, itp.).
 
-\- przenieść wykresy do plotly::ggplotly().
-
+\- przenieść wykresy do plotly::ggplotly().-->
+```
 ```{r}
 library(openxlsx)
 library(knitr)
@@ -120,7 +121,9 @@ gt(head(data,5)) %>%
   )
 ```
 
-## Zmienne
+Dane zawierają *3678* obserwacji podzielonych na *10* zmiennych.
+
+### Zmienne
 
 -   `course_title` - Tytuł kursu.
 
@@ -156,24 +159,25 @@ gt(head(data,5)) %>%
 
     -   *`Musical Instruments`* - muzyczne instrumenty.
 
-    -   *`Web Development`* - tworzeniestron internetowych.
+    -   *`Web Development`* - tworzenie stron internetowych.
 
-## Czyszczenie i przygotowanie danych
+### Cele badawcze
 
-Sprawdzenie czy baza danych zawiera jakieś brakujące wartości
+1.  **Analiza Trendów Rozwojowych Platformy Udemy**: Celem jest przeprowadzenie szczegółowej analizy historycznych danych, aby zidentyfikować trendy w rozwoju platformy, w tym wzrost liczby użytkowników, ceny kursów oraz ich rozkład tematyczny. Szczególny nacisk zostanie położony na wizualizację danych, umożliwiającą łatwe zrozumienie zmian zachodzących w czasie
+2.  **Badanie Korelacji i Zależności między Zmiennymi Charakteryzującymi Kursy**: Przedmiotem analizy będą wzajemne zależności między różnymi atrybutami kursów, takimi jak cena, liczba uczestników, recenzji oraz długość kursów. Celem jest zrozumienie, jak te czynniki wzajemnie na siebie wpływają i w jakim stopniu mogą determinować popularność kursu.
+3.  **Modelowanie Prognozujące Rozwój Nowych Kursów**: Celem jest zbudowanie modeli statystycznych i predykcyjnych, które pozwolą ocenić potencjalną popularność i sukces nowo wprowadzanych kursów na platformie. Modele będą oparte na analizie historycznych danych o kursach i ich wynikach, a także mogą uwzględniać zewnętrzne wskaźniki rynkowe i trendy edukacyjne.
 
-```{r}
+### Czyszczenie i przygotowanie danych
+
+```{r results='hide'}
 length(data[is.na(data)])
 ```
 
-Baza danych nie zawiera brakujących wartości
-
-Sprawdzenie czy nie ma powtarzających się rekordów
+Analiza w poszukiwaniu brakujących wartości wykazała, że w badanym zbiorze danych nie występują luki informacyjne. Kolejnym etapem było zbadanie zbioru pod kątem występowania powtarzających się wierszy. Stwierdzono obecność 6 duplikatów, które zostały usunięte w celu zapewnienia większej precyzji i wiarygodności przyszłych analiz.
 
 ```{r}
 powtarzajace = data[duplicated(data),]
 liczba = nrow(powtarzajace)
-liczba
 ```
 
 ```{r}
@@ -189,7 +193,9 @@ df$published_timestamp =ymd(df$published_timestamp)  # zamiana daty
 df$year <- as.factor(year(df$published_timestamp))
 ```
 
-## Analiza eksploracyjna
+W celu usprawnienia procesu przetwarzania i analizy danych, podjęto decyzję o dokonaniu istotnych zmian w strukturze danych. Atrybuty `level`, `is_paid` oraz `subject` zostały przekonwertowane na zmienne typu factor, co pozwoli na bardziej efektywne wykorzystanie pamięci i przyspieszenie analiz. Dodatkowo, zmienna `published_timestamp` została dostosowana poprzez ograniczenie jej zawartości do roku, miesiąca i dnia, a następnie przekształcenie w format daty. Te zmiany mają kluczowe znaczenie dla zwiększenia wydajności przyszłych analiz danych.
+
+### Analiza eksploracyjna
 
 Podstawowe statystyki
 
@@ -240,8 +246,6 @@ Ogólnie, te statystyki wskazują na dużą różnorodność kursów dostępnych
 
 ## Wizualizacja danych
 
-Liczba kursów opublikowanych każdego roku
-
 ```{r}
 ggplot(df, aes(x=year, fill= is_paid)) +
   geom_bar() +
@@ -265,28 +269,26 @@ Widać również, że proporcja kursów darmowych do płatnych pozostaje stosunk
 Wizualizacja rozkładu ceny kursów
 
 ```{r}
-df %>% 
-  group_by(year, is_paid) %>%
+y = year(df$published_timestamp)
+cbind(df,y) %>% 
+  group_by(y, is_paid) %>%
   summarize(Average_subs= mean(num_subscribers)) %>%
-  ggplot(aes(x=as.numeric(year), y=Average_subs, color=is_paid)) +
+  ggplot(aes(x=as.numeric(y), y=Average_subs, color=is_paid)) +
   geom_line() +
   theme_minimal() +
-  labs(title="Średnia liczba subskrybentów w ciągu lat (płatne/niepłatne)", x="Rok", y="Średnia liczba subskrybentów")
+  labs(title="Średnia liczba subskrybentów w ciągu lat (płatne/niepłatne)", x="Rok dodania kursu", y="Średnia liczba subskrybentów")
 ```
 
-Dane pokazują spadek średniej liczby subskrybentów zarówno dla kursów płatnych, jak i darmowych, z większym spadkiem w przypadku kursów płatnych. To wskazuje na preferencje użytkowników dla tańszych opcji edukacji online i zmieniające się potrzeby konsumentów. Wysoka początkowa popularność płatnych kursów w 2012 roku sugeruje wczesne nasycenie rynku, ale z biegiem czasu zainteresowanie spadło, prawdopodobnie z powodu rosnącej konkurencji. Natomiast kursy darmowe wydają się utrzymywać stabilny poziom zainteresowania jako nisko ryzykowna opcja nauki. <!-- Ogólny trend: Istnieje ogólny spadkowy trend w średniej liczbie subskrybentów zarówno dla kursów płatnych, jak i darmowych. To wskazuje na to, że średnia popularność kursów zmniejsza się z roku na rok.
+Wykres wskazuje na wyższą średnią liczbę subskrybentów kursów płatnych w porównaniu z darmowymi. Obserwuje się spadek popularności obu rodzajów kursów w czasie, z ostrzejszym trendem spadkowym dla darmowych kursów. Kursy płatne wydają się utrzymywać bardziej stabilną liczbę subskrybentów na przestrzeni lat. <!-- Popularność Kursów Płatnych vs Darmowych: Średnia liczba subskrybentów dla kursów płatnych wydaje się być znacznie wyższa niż dla kursów darmowych. Jest to wskazane przez krzywą oznaczoną kolorem czerwonym (dla kursów płatnych) leżącą wyżej na wykresie niż krzywa niebieska (dla kursów darmowych).
 
-Stosunek płatnych do darmowych kursów: Kursy płatne doświadczały większego spadku w średniej liczbie subskrybentów niż kursy darmowe. To może wskazywać, że użytkownicy mogą preferować mniej kosztowne opcje edukacji online.
+Trend w Czasie: Dla obu typów kursów (płatnych i darmowych) obserwujemy spadek średniej liczby subskrybentów w miarę upływu czasu od daty dodania kursu. To może wskazywać na to, że nowsze kursy mają tendencję do przyciągania mniejszej liczby subskrybentów w porównaniu do kursów starszych, lub też, że kursy z czasem tracą na popularności.
 
-Zmieniające się preferencje: Spadek średniej liczby subskrybentów, zwłaszcza w przypadku kursów płatnych, może odzwierciedlać zmieniające się preferencje konsumentów, być może z powodu pojawienia się nowych platform, metod dostarczania treści, lub zwiększonej wrażliwości cenowej subskrybentów.
+Różnice w Trendach: Spadek popularności wydaje się być bardziej stromy dla kursów płatnych niż dla darmowych. Może to sugerować, że kursy płatne szybciej tracą subskrybentów w czasie, co może wynikać z różnych czynników, takich jak konkurencja, zmieniające się trendy w edukacji online lub satysfakcja użytkowników.
 
-padek zainteresowania w czasie: Średnia liczba subskrybentów zarówno dla kursów płatnych, jak i niepłatnych wykazuje tendencję spadkową w badanym okresie. To może wskazywać na spadek ogólnego zainteresowania daną platformą kursów online lub na rosnącą konkurencję w tej przestrzeni.
+Stabilność Kursów Darmowych: Krzywa dla kursów darmowych wydaje się być bardziej płaska w porównaniu z krzywą dla kursów płatnych, co może wskazywać na większą stabilność w zainteresowaniu tego typu kursami w dłuższym okresie czasu.
 
-Większy spadek dla kursów płatnych: Wykres pokazuje, że spadek średniej liczby subskrybentów jest bardziej wyraźny w przypadku kursów płatnych. To może sugerować, że użytkownicy są bardziej skłonni do rezygnacji z płatnych subskrypcji w obliczu alternatywnych, potencjalnie tańszych lub darmowych źródeł nauki.
-
-Wczesne nasycenie rynku: Wysoka początkowa średnia liczba subskrybentów dla płatnych kursów w 2012 roku może wskazywać na wczesne nasycenie rynku, gdzie pionierskie kursy przyciągnęły dużą liczbę użytkowników. Z biegiem czasu, gdy rynek się rozrastał i pojawiało się więcej opcji, średnia liczba subskrybentów na kurs mogła spadać.
-
-Stabilizacja dla kursów niepłatnych: Linia trendu dla kursów niepłatnych wydaje się stabilizować w ostatnich latach. Może to wskazywać na utrzymujące się, stałe zainteresowanie darmowymi kursami, które mogą służyć jako nisko ryzykowna opcja dla osób chcących kontynuować naukę bez inwestycji finansowych. -->
+Analiza Wartości Szczególnych: Warto zwrócić uwagę na konkretne punkty wykresu, takie jak gwałtowny spadek dla kursów płatnych w okolicach 4 lat od daty dodania. Może to wskazywać na pewne zdarzenie lub zmianę na rynku, która miała duży wpływ na subskrypcje.
+ -->
 
 ```{r}
 library(gridExtra) 
@@ -320,7 +322,7 @@ p2 <- ggplot(df, aes(x = price_range, fill = level)) +
 grid.arrange(p2, p1, ncol = 2) 
 ```
 
-Podsumowując, analiza wykresu sugeruje kilka kluczowych trendów w dostępności i cenach kursów. Największa liczba kursów jest dostępna w najniższym przedziale cenowym (0-20), głównie na poziomie początkującym, co może świadczyć o dużej liczbie osób szukających niedrogich kursów na początek nauki. Kursy na poziomie zaawansowanym (Expert Level) są znacznie rzadsze we wszystkich przedziałach cenowych, co wskazuje na ich specjalistyczny charakter i mniejszą dostępność. W przedziałach cenowych średnich (21-160) obserwuje się równomierną dystrybucję kursów na poziomie początkującym i średnio zaawansowanym. W najwyższym przedziale cenowym (181-200) kursy dla początkujących stanowią mniejszość, co sugeruje, że rzadko są one oferowane po wysokich cenach. Ogólnie rzecz biorąc, dostępność kursów maleje wraz ze wzrostem cen, a większość kursów oferowana jest na poziomie początkującym w najniższym przedziale cenowym. Ponadto, dominacja kursów ogólnych (All Levels) wskazuje na preferencję twórców kursów do tworzenia materiałów dostosowanych do szerokiej publiczności, podczas gdy znacznie mniejsza liczba kursów dla zaawansowanych pokazuje potencjalne nisze rynkowe do rozwoju.
+Analiza wykresu sugeruje kilka kluczowych trendów w dostępności i cenach kursów. Największa liczba kursów jest dostępna w najniższym przedziale cenowym (0-20), głównie na poziomie początkującym, co może świadczyć o dużej liczbie osób szukających niedrogich kursów na początek nauki. Kursy na poziomie zaawansowanym (Expert Level) są znacznie rzadsze we wszystkich przedziałach cenowych, co wskazuje na ich specjalistyczny charakter i mniejszą dostępność. W przedziałach cenowych średnich (21-160) obserwuje się równomierną dystrybucję kursów na poziomie początkującym i średnio zaawansowanym. W najwyższym przedziale cenowym (181-200) kursy dla początkujących stanowią mniejszość, co sugeruje, że rzadko są one oferowane po wysokich cenach. Ogólnie rzecz biorąc, dostępność kursów maleje wraz ze wzrostem cen, a większość kursów oferowana jest na poziomie początkującym w najniższym przedziale cenowym. Ponadto, dominacja kursów ogólnych (All Levels) wskazuje na preferencję twórców kursów do tworzenia materiałów dostosowanych do szerokiej publiczności, podczas gdy znacznie mniejsza liczba kursów dla zaawansowanych pokazuje potencjalne nisze rynkowe do rozwoju.
 
 ```{=html}
 <!-- Największa liczba kursów jest dostępna w najniższym przedziale cenowym (0-20), co sugeruje, że kursy na poziomie początkującym są najbardziej dostępne cenowo lub że organizatorzy kursów preferują oferować kursy wstępne po niższych cenach, aby przyciągnąć więcej uczestników.
@@ -702,6 +704,7 @@ pr$rotation
 
 Powstały model składa się z 3 składowych :
 
+```{=tex}
 \begin{align}
 
 PC1 = 0.58 \cdot \text{price} + 0.48 \cdot \text{num\_reviews} + 0.66 \cdot \text{num\_lectures} \\\\
@@ -711,7 +714,7 @@ PC2 = -0.57 \cdot \text{price} + 0.82 \cdot \text{num\_reviews} - 0.09 \cdot \te
 PC3 = -0.58 \cdot \text{price} - 0.32 \cdot \text{num\_reviews} + 0.75 \cdot \text{num\_lectures}
 
 \end{align}
-
+```
 ```{r}
 pr %>% 
   summary()
@@ -814,7 +817,11 @@ prp(fit,
 # prognozowanie danych testowych
 pred = predict(fit, data_test)
 result = postResample(pred = pred, obs = data_test$num_subscribers)
-result
+
+result_df <- data.frame(t(result))
+colnames(result_df) <- c("RSQUARED", "RMSE", "MAE")
+gt_table <- gt(result_df)
+gt_table
 ```
 
 ### Las losowy
@@ -850,18 +857,19 @@ split = createDataPartition(las$num_subscribers, p = .8, list = F, times = 1)  #
 data_train = las[split,]
 data_test = las[-split,]
 
-model = randomForest(num_subscribers ~ .-level, data = data_train, proximity=  T)
+model = randomForest(num_subscribers ~ ., data = data_train, proximity=  T)
 
 # ocena modelu
 predi = predict(model, data_test)
 result1 = postResample(pred = predi, obs = data_test$num_subscribers)
-result1
 varImpPlot(model) # wyższa wartość wskazuje wyższą ważność zmiennej w modelu, level ma małą w porównaniu do innych więc można ją wyżucić z modelu
 
+result_df <- data.frame(t(result1))
+colnames(result_df) <- c("RSQUARED", "RMSE", "MAE")
+gt_table <- gt(result_df)
+gt_table
 # można jeszcze dodać wykresy błędów, ale nie wiem czy jest sens, kiedyś sprawdzę
 ```
-
-Po usunięciu level z modelu zwiększyło się Rsquared, co oznacza, że model wyjaśnia więcej zmienności zmiennej objaśnianej
 
 ### Porównanie modeli
 
@@ -892,4 +900,36 @@ gt(modele_df) %>%
   )
 ```
 
-Najlepszym zbudowanym modelem okazał się las losowy. Posiada największą wartość R.squared oraz najmniejsze wartości RMSE oraz MAE. Mimo to R.squared równy 0.69 nie jest ciągle wartością zadowalającą. Prawie 70% wyjaśnienia zmienności pozostawia sporą szansę na popełnienie błędu przez model.
+1.  **Las Losowy**:
+
+    -   Najniższy RMSE (4081.392) oraz najwyższy R\^2 (0.6960786) wśród wszystkich modeli, co wskazuje na najlepszą ogólną wydajność.
+
+    -   Ma również drugi najniższy MAE (1848.716), co sugeruje dobrą zdolność do minimalizowania średnich błędów w prognozach.
+
+2.  **Drzewo Decyzyjne**:
+
+    -   Drugi pod względem wydajności model z RMSE 5115.595 i R\^2 0.5640084.
+
+    -   MAE (2179.520) jest wyższe niż w przypadku Lasu Losowego, co może wskazywać na większe błędy w prognozach pojedynczych przypadków.
+
+3.  **Regresja Liniowa**:
+
+    -   Trzeci pod względem wydajności, z RMSE 6502.528 i R\^2 0.5301884.
+
+    -   MAE 2624.015 wskazuje na to, że średnie błędy w prognozach są większe niż w przypadku Drzewa Decyzyjnego i Lasu Losowego.
+
+4.  **PCA** (analiza głównych składowych):
+
+    -   Najgorszy wynik zarówno pod względem RMSE (7196.761) jak i R\^2 (0.4245157).
+
+    -   Najwyższy MAE (2823.811), co sugeruje najmniej precyzyjne prognozy w porównaniu do pozostałych modeli.
+
+Podsumowując, **Las Losowy** wydaje się być najlepszym modelem w tym zestawieniu, oferując najbardziej dokładne i spójne prognozy. **Drzewo Decyzyjne** i **Regresja Liniowa** prezentują średnią wydajność, podczas gdy model oparty na **PCA** wydaje się być najmniej skuteczny w tych konkretnych warunkach.
+
+## Podsumowanie
+
+Analiza rynku kursów online na platformie Udemy ukazała szeroki wachlarz cenowy - od darmowych po kursy kosztujące do 200 USD, z medianą subskrypcji na poziomie 911,5. Trendy wskazują na wyższą popularność kursów bezpłatnych na starcie, ale spadek zainteresowania obu typów kursów z biegiem czasu. Większość kursów to te na poziomie początkującym, a kategorie biznesowe i technologiczne cieszą się dużym zainteresowaniem. Rozkład recenzji i subskrypcji jest skośny, z większością kursów mających mało recenzji i subskrypcji, co wskazuje na ich nowość lub niszową popularność. Silna korelacja między liczbą recenzji a subskrypcji sugeruje, że popularne kursy przyciągają większą uwagę.
+
+Porównanie modeli prognostycznych dla liczby subskrybentów wykazało, że model Lasu Losowego ma najlepsze wskaźniki wydajności (najniższy RMSE i najwyższy R\^2), co czyni go najlepszym wyborem wśród rozważanych opcji. Drzewo Decyzyjne i Regresja Liniowa mają średnie wskaźniki, natomiast PCA pokazało się jako najmniej skuteczny model.
+
+Wnioski z projektu wskazują na dynamiczny i różnorodny rynek kursów online, z pewnymi kursami osiągającymi znaczącą popularność, podczas gdy inne pozostają mniej znane. Te spostrzeżenia mogą służyć jako cenne wskazówki dla twórców kursów przy tworzeniu i dostosowywaniu ich oferty edukacyjnej.
