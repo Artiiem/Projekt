@@ -254,17 +254,9 @@ ggplot(df, aes(x=year, fill= is_paid)) +
 
 ```
 
-Liczba kursów online rośnie z roku na rok, z przewagą kursów płatnych, co wskazuje na stały popyt na treści premium. Początkowo, w 2012 roku, kursy darmowe były mniej liczne niż płatne, ale od 2014 roku obserwuje się wzrost liczby obu typów kursów. Od 2016 roku liczba kursów darmowych stabilizuje się, podczas gdy płatne kursy nadal rosną, co wskazuje na zróżnicowanie i dostępność płatnych opcji. Proporcja kursów darmowych do płatnych wydaje się stabilna w ostatnich latach, co sugeruje ustabilizowanie się modelu biznesowego kursów online. <!-- Ogólna liczba kursów rośnie z roku na rok, co wskazuje na wzrost popularności i/lub dostępności kursów online.
-
-Kursy płatne stanowią większość wszystkich opublikowanych kursów w każdym roku, co sugeruje, że istnieje stały popyt na kursy premium, które prawdopodobnie oferują bardziej zaawansowaną lub specjalistyczną wiedzę.
-
+Ogólna liczba kursów rośnie z roku na rok, co wskazuje na wzrost popularności i/lub dostępności kursów online. Kursy płatne stanowią większość wszystkich opublikowanych kursów w każdym roku, co sugeruje, że istnieje stały popyt na kursy premium, które prawdopodobnie oferują bardziej zaawansowaną lub specjalistyczną wiedzę.
 W 2012 roku liczba kursów darmowych była znacznie niższa w porównaniu do płatnych, co może wskazywać, że na początku obserwowanego okresu większość dostawców treści preferowała tworzenie kursów płatnych.
-
 W 2014 roku nastąpił znaczący wzrost liczby kursów, zarówno płatnych, jak i darmowych, co może oznaczać rosnące zainteresowanie edukacją online i/lub zwiększenie się liczby dostawców kursów.
-
-W latach 2016 i późniejszych liczba kursów darmowych stabilizuje się, podczas gdy liczba kursów płatnych nadal rośnie, co może wskazywać na zwiększenie się różnorodności i dostępności płatnych opcji dla uczących się.
-
-Widać również, że proporcja kursów darmowych do płatnych pozostaje stosunkowo stała w latach 2014-2016, co może sugerować ustabilizowanie się modelu biznesowego dla kursów online. -->
 
 Wizualizacja rozkładu ceny kursów
 
@@ -322,7 +314,7 @@ p2 <- ggplot(df, aes(x = price_range, fill = level)) +
 grid.arrange(p2, p1, ncol = 2) 
 ```
 
-Analiza wykresu sugeruje kilka kluczowych trendów w dostępności i cenach kursów. Największa liczba kursów jest dostępna w najniższym przedziale cenowym (0-20), głównie na poziomie początkującym, co może świadczyć o dużej liczbie osób szukających niedrogich kursów na początek nauki. Kursy na poziomie zaawansowanym (Expert Level) są znacznie rzadsze we wszystkich przedziałach cenowych, co wskazuje na ich specjalistyczny charakter i mniejszą dostępność. W przedziałach cenowych średnich (21-160) obserwuje się równomierną dystrybucję kursów na poziomie początkującym i średnio zaawansowanym. W najwyższym przedziale cenowym (181-200) kursy dla początkujących stanowią mniejszość, co sugeruje, że rzadko są one oferowane po wysokich cenach. Ogólnie rzecz biorąc, dostępność kursów maleje wraz ze wzrostem cen, a większość kursów oferowana jest na poziomie początkującym w najniższym przedziale cenowym. Ponadto, dominacja kursów ogólnych (All Levels) wskazuje na preferencję twórców kursów do tworzenia materiałów dostosowanych do szerokiej publiczności, podczas gdy znacznie mniejsza liczba kursów dla zaawansowanych pokazuje potencjalne nisze rynkowe do rozwoju.
+Analiza wykresu sugeruje kilka kluczowych trendów w dostępności i cenach kursów. Największa liczba kursów jest dostępna w przedziale cenowym (21-60), głównie na poziomie początkującym i dla wszystkich, co może świadczyć o dużej liczbie osób szukających niedrogich kursów na początek nauki. Kursy na poziomie zaawansowanym (Expert Level) są znacznie rzadsze we wszystkich przedziałach cenowych, co wskazuje na ich specjalistyczny charakter i mniejszą dostępność. W przedziałach cenowych średnich (61-180) obserwuje się równomierną dystrybucję kursów na poziomie początkującym i średnio zaawansowanym. W najwyższym przedziale cenowym (181-200) kursy dla początkujących stanowią mniejszość, co sugeruje, że rzadko są one oferowane po wysokich cenach. Ogólnie rzecz biorąc, dostępność kursów maleje wraz ze wzrostem cen, a większość kursów oferowana jest na poziomie początkującym w najniższym przedziale cenowym. Ponadto, dominacja kursów ogólnych (All Levels) wskazuje na preferencję twórców kursów do tworzenia materiałów dostosowanych do szerokiej publiczności, podczas gdy znacznie mniejsza liczba kursów dla zaawansowanych pokazuje potencjalne nisze rynkowe do rozwoju.
 
 ```{=html}
 <!-- Największa liczba kursów jest dostępna w najniższym przedziale cenowym (0-20), co sugeruje, że kursy na poziomie początkującym są najbardziej dostępne cenowo lub że organizatorzy kursów preferują oferować kursy wstępne po niższych cenach, aby przyciągnąć więcej uczestników.
@@ -796,6 +788,10 @@ Drzewo decyzyjne to narzędzie stosowane w uczeniu maszynowym do modelowania prz
 
 Do modelu drzewa decyzyjnego wybieram zmienne **`price`**, **`num_reviews`**, **`num_lectures`**, **`level`**, **`content_duration`**, **`published_timestamp`** oraz **`subject`**.
 
+Do predykcji podzieliliśmy zbiór danych na zbiór treningowy i testowy w proporcjach 80:20
+
+Użyliśmy set.seed aby mieć powtarzalność wyników i wniosków
+
 ```{r}
 set.seed(2024)
 library(rpart)
@@ -819,7 +815,7 @@ pred = predict(fit, data_test)
 result = postResample(pred = pred, obs = data_test$num_subscribers)
 
 result_df <- data.frame(t(result))
-colnames(result_df) <- c("RSQUARED", "RMSE", "MAE")
+colnames(result_df) <- c("RMSE", "Rsquared", "MAE")
 gt_table <- gt(result_df)
 gt_table
 ```
@@ -827,6 +823,14 @@ gt_table
 ### Las losowy
 
 Las losowy, znany również jako Random Forest, to zaawansowana metoda uczenia maszynowego oparta na agregacji wielu drzew decyzyjnych do generowania bardziej precyzyjnych i stabilnych prognoz. Jest to przykład tzw. techniki "ensemble learning", gdzie wielokrotne modele (w tym przypadku drzewa decyzyjne) są łączone w celu uzyskania lepszych wyników niż każdy z modeli oddzielnie.
+
+1.  **Tworzenie wielu drzew decyzyjnych**: Las losowy składa się z dużej liczby drzew decyzyjnych. Każde drzewo jest trenowane na nieco innej próbce danych, często wybieranej metodą bootstrap (losowy wybór z powtórzeniami).
+
+2.  **Różnorodność**: Każde drzewo w lesie losowym jest budowane z wykorzystaniem losowego podzbioru cech, co zwiększa różnorodność w modelu i pomaga w redukcji nadmiernego dopasowania (ang. overfitting).
+
+3.  **Wysoka dokładność i stabilność**: Dzięki agregacji wyników z wielu modeli, lasy losowe często osiągają wysoką dokładność i są odporne na nadmierne dopasowanie, co czyni je skutecznymi w szerokim zakresie zastosowań.
+
+4.  **Uniwersalność**: Lasy losowe mogą być stosowane zarówno do problemów klasyfikacji, jak i regresji, a także do innych zadań, takich jak klasyfikacja wieloklasowa, detekcja anomalii i inne.
 
 ```{=html}
 <!-- Kluczowe aspekty lasu losowego:
@@ -865,7 +869,7 @@ result1 = postResample(pred = predi, obs = data_test$num_subscribers)
 varImpPlot(model) # wyższa wartość wskazuje wyższą ważność zmiennej w modelu, level ma małą w porównaniu do innych więc można ją wyżucić z modelu
 
 result_df <- data.frame(t(result1))
-colnames(result_df) <- c("RSQUARED", "RMSE", "MAE")
+colnames(result_df) <- c("RMSE", "Rsquared", "MAE")
 gt_table <- gt(result_df)
 gt_table
 # można jeszcze dodać wykresy błędów, ale nie wiem czy jest sens, kiedyś sprawdzę
@@ -928,8 +932,12 @@ Podsumowując, **Las Losowy** wydaje się być najlepszym modelem w tym zestawie
 
 ## Podsumowanie
 
-Analiza rynku kursów online na platformie Udemy ukazała szeroki wachlarz cenowy - od darmowych po kursy kosztujące do 200 USD, z medianą subskrypcji na poziomie 911,5. Trendy wskazują na wyższą popularność kursów bezpłatnych na starcie, ale spadek zainteresowania obu typów kursów z biegiem czasu. Większość kursów to te na poziomie początkującym, a kategorie biznesowe i technologiczne cieszą się dużym zainteresowaniem. Rozkład recenzji i subskrypcji jest skośny, z większością kursów mających mało recenzji i subskrypcji, co wskazuje na ich nowość lub niszową popularność. Silna korelacja między liczbą recenzji a subskrypcji sugeruje, że popularne kursy przyciągają większą uwagę.
+Z czasem platforma Udemy stale się rozwija zyskując co roku znaczącą liczbę kursów.
+
+Analiza rynku kursów online na platformie Udemy ukazała szeroki wachlarz cenowy - od darmowych po kursy kosztujące do 200 USD, z medianą subskrypcji na poziomie 911,5.
+
+Trendy wskazują na wyższą popularność kursów bezpłatnych na starcie, ale spadek zainteresowania obu typów kursów z biegiem czasu. Większość kursów to te na poziomie początkującym, a kategorie biznesowe i technologiczne cieszą się dużym zainteresowaniem. Rozkład recenzji i subskrypcji jest skośny, z większością kursów mających mało recenzji i subskrypcji, co wskazuje na ich nowość lub niszową popularność. Silna korelacja między liczbą recenzji a subskrypcji sugeruje, że popularne kursy przyciągają większą uwagę.
 
 Porównanie modeli prognostycznych dla liczby subskrybentów wykazało, że model Lasu Losowego ma najlepsze wskaźniki wydajności (najniższy RMSE i najwyższy R\^2), co czyni go najlepszym wyborem wśród rozważanych opcji. Drzewo Decyzyjne i Regresja Liniowa mają średnie wskaźniki, natomiast PCA pokazało się jako najmniej skuteczny model.
 
-Wnioski z projektu wskazują na dynamiczny i różnorodny rynek kursów online, z pewnymi kursami osiągającymi znaczącą popularność, podczas gdy inne pozostają mniej znane. Te spostrzeżenia mogą służyć jako cenne wskazówki dla twórców kursów przy tworzeniu i dostosowywaniu ich oferty edukacyjnej.
+Wnioski z projektu wskazują na dynamiczny i różnorodny rynek kursów online, z pewnymi kursami osiągającymi znaczącą popularność, podczas gdy inne pozostają mniej znane.
